@@ -71,13 +71,13 @@ class Vec:
 
 
 
-class ControlPoint:
-    '''Position of control point in reference frame (which has root in rootPos)'''
-    def __init__(self, startPos, endPos = None):
-        self.startpos = startPos
+class Filament:
+    ''' A Vortex Filament from startpos to endpos with strength circulation. '''
+    def __init__(self, startPos, endPos):
+        self.startPos = startPos
+        self.endPos = endPos
 
         self.circulation = None
-        self.endPoint = None
 
     def set_circulation(self, magnitude):
         self.circulation = magnitude
@@ -91,14 +91,16 @@ class Leg:
 
         self.circulation = None
 
-    def SetControlPoints(self, arrayOfCylindricalPositions, rootPos):
+    def CreateControlPoints(self, arrayOfCylindricalPositions, rootPos):
         '''Takes an argument like arrayOfCylindricalPositions = [(2,pi,0), (2.1,pi,1),...] and a root reference position in carthesian.'''
-
+        
+        # Requires a starting point!
+        prevPoint = Vec(arrayOfCylindricalPositions[0])
+        arrayOfCylindricalPositions.pop(0)
         for cylPos in arrayOfCylindricalPositions:
             point = Vec(cylPos, rootPos, bLocalCylindrical=True)
-            # Set the previous point to end in this new control point
-            self.control_points[-1].endPoint = point
-            self.control_points.append(ControlPoint(point))       
+            self.control_points.append(Filament(point, prevPoint))  
+            prevPoint = point     
 
     def reset(self):
         [cp.reset() for cp in self.control_points]

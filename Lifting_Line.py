@@ -58,3 +58,6 @@ class Wake:
     def reset(self):
         [hs.reset() for hs in self.horse_shoes]
         self.__init__(reset=True)
+
+if __name__=="__main__":
+    print("This is a lifting line library, pls dont run this")

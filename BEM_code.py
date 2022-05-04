@@ -301,43 +301,57 @@ class Turbine:
                 a_prime[i] = be.a_prime
                 twist[i] = be.beta
 
-            plt.figure(1)
+            plt.figure(1, figsize=(5, 5))
             plt.plot(self.blade.r_list, alpha, linestyle=linestyles[j], color='tab:blue', label=f'Angle of Attack ($\\alpha$) ($\\lambda={tsr}$)')
             plt.plot(self.blade.r_list, np.degrees(phi), linestyle=linestyles[j], color='tab:orange', label=f'Inflow Angle ($\\phi$) ($\\lambda={tsr}$)')
             # plt.plot(self.blade.r_list, twist, label=f'Twist Angle ($\\beta$)')
             plt.xlabel('$r$ [m]')
             plt.ylabel('$Angle$ [$^{\\circ}$]')
 
-            plt.figure(2)
+            plt.figure(2, figsize=(5, 5))
             plt.plot(self.blade.r_list, a, linestyle=linestyles[j], color='tab:blue', label=f'Axial Induction ($a$) ($\\lambda={tsr}$)')
             plt.plot(self.blade.r_list, a_prime, linestyle=linestyles[j], color='tab:orange', label=f"Azimuthal Induction ($a'$) ($\\lambda={tsr}$)")
             plt.xlabel('$r$ [m]')
             plt.ylabel('$Induction\\ factor$ [-]')
             plt.yticks(np.arange(0, 0.6, 0.1))
 
-            plt.figure(3)
+            plt.figure(3, figsize=(5, 5))
             plt.plot(self.blade.r_list, pn, linestyle=linestyles[j], color='tab:blue', label=f'Thrust Loading ($p_n$) ($\\lambda={tsr}$)')
             plt.plot(self.blade.r_list, pt, linestyle=linestyles[j], color='tab:orange', label=f'Azimuthal Loading ($p_t$) ($\\lambda={tsr}$)')
             plt.xlabel('$r$ [m]')
             plt.ylabel('$p$ [N/m]')
 
-        plt.figure(1)
+            plt.figure(4, figsize=(5, 5))
+            # plt.plot(self.blade.r_list, pt * self.blade.r_list, linestyle=linestyles[j], color='tab:green', label=f'Torque Loading ($p_q$) ($\\lambda={tsr}$)')
+            plt.plot(self.blade.r_list, 4 * a * (1-a), linestyle=linestyles[j], color='tab:blue', label=f'Thrust Loading ($c_n$) ($\\lambda={tsr}$)')
+            plt.plot(self.blade.r_list, 4 * a_prime * (1-a) * tsr, linestyle=linestyles[j], color='tab:orange', label=f'Azimuthal Loading ($c_t$) ($\\lambda={tsr}$)')
+            plt.plot(self.blade.r_list, 4 * a_prime * (1-a) * tsr * self.blade.r_list / self.blade.r, linestyle=linestyles[j], color='tab:green', label=f'Torque Loading ($c_q$) ($\\lambda={tsr}$)')
+            plt.xlabel('$r$ [m]')
+            plt.ylabel('Coefficient [-]')
+
+        plt.figure(1, figsize=(5, 5))
         plt.grid()
         plt.legend()
         plt.tight_layout()
         plt.savefig('Angles_no_yaw.pdf')
 
-        plt.figure(2)
+        plt.figure(2, figsize=(5, 5))
         plt.grid()
         plt.legend()
         plt.tight_layout()
         plt.savefig('Inductions_no_yaw.pdf')
 
-        plt.figure(3)
+        plt.figure(3, figsize=(5, 5))
         plt.grid()
         plt.legend()
         plt.tight_layout()
         plt.savefig('Forces_no_yaw.pdf')
+
+        plt.figure(4, figsize=(5, 5))
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig('Coefficients_no_yaw.pdf')
 
         plt.show()
 
@@ -659,10 +673,10 @@ if __name__ == '__main__':
 
     turbine = Turbine(50)
     # turbine.cp_lamda()
-    # turbine.spanwise_distributions()
+    turbine.spanwise_distributions()
     # turbine.yaw_polar_plots()
     # turbine.loss_comparison()
-    turbine.enthalpy_trial()
+    # turbine.enthalpy_trial()
 
     # a = .82
     # yaw = np.radians(30)

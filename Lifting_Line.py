@@ -30,15 +30,13 @@ class Vec:
             self.zloc = localPos[2]
         
         if bLocalCylindrical:
-            self.xloc, self.yloc, self.zloc = CylToCarth(localPos)
+            self.xloc, self.yloc, self.zloc = CylToCarth(*localPos)
+            self.rloc, self.thetaloc, _ = localPos
 
         # Setting the global coordinates
         self.xglob = self.xloc + referencePos[0]
         self.yglob = self.yloc + referencePos[1]
         self.zglob = self.zloc + referencePos[2]
-
-        # Now update the cylindrical positions
-        self.rloc, self.thetaloc, _ = CarthToCyl(self.xloc, self.yloc, self.zloc)
 
     def Length(self):
         return np.sqrt(self.xloc*self.xloc + self.yloc*self.yloc + self.zloc*self.zloc)

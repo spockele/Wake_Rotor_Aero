@@ -27,11 +27,9 @@ class Vec:
         self.refPos = referencePos
         if not bLocalCylindrical:
             # Input is in carthesian
-            self.xloc = localPos[0]
-            self.yloc = localPos[1]
-            self.zloc = localPos[2]
-        
-        if bLocalCylindrical:
+            self.xloc, self.yloc, self.zloc = localPos
+            self.rloc, self.thetaloc, _ = CarthToCyl(*localPos)
+        else:
             self.xloc, self.yloc, self.zloc = CylToCarth(*localPos)
             self.rloc, self.thetaloc, _ = localPos
 
@@ -61,10 +59,13 @@ class Vec:
         z = self.zloc * scale
         return Vec((x,y,z), self.refPos)
 
+    def __rmul__(self, scale):
+        return self * scale
+
     def __sub__(self, o):
         return self + -1. * o
 
-    def __div__(self, scale):
+    def __truediv__(self, scale):
         return self * (1/scale)
 
 

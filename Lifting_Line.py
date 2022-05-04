@@ -42,7 +42,7 @@ class Leg:
 
 
 class HorseShoe:
-    def __init__(self, airfoil, chord, delta_r, reset=False):
+    def __init__(self, airfoil, chord, delta_r, twist, pos, reset=False):
         if not reset:
             self.leg1 = Leg()
             self.leg2 = Leg()
@@ -50,8 +50,11 @@ class HorseShoe:
             self.airfoil = airfoil
             self.chord = chord
             self.delta_r = delta_r
+            self.twist = twist
+            self.pos = pos
 
         self.circulation = None
+        self.induced_velocity = None
 
     def set_circulation(self, w, aoa):
         """
@@ -61,6 +64,9 @@ class HorseShoe:
         :return: None
         """
         self.circulation = .5 * w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(aoa))
+
+    def set_velocity_triangle(self):
+        return
 
     def reset(self):
         self.leg1.reset()

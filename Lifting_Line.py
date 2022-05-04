@@ -29,6 +29,11 @@ def CarthToCyl(x,y,z):
 class Vec:
     '''Reference pos is always in carthesian coordinates.'''
     def __init__(self,localPos, referencePos=(0.,0.,0.), bLocalCylindrical=False):
+
+        # I make this error too much so this is an attempt at salvation
+        if bLocalCylindrical < 0 or bLocalCylindrical > 1:
+            raise ValueError("b-baka, are you sure you passed a tuple into the constructor for Vec like Vec((1,2,3)), and not Vec(1,2,3)?")
+
         self.refPos = referencePos
         if not bLocalCylindrical:
             # Input is in carthesian
@@ -204,6 +209,7 @@ class Turbine:
             # BladeElement takes in argument relative_pitch, I assume that this means total? So offset with the blade pitch
             relative_pitch = self.blade_pitch + twist
 
+            # Hey @fien this throws an error, pls fix.
             self.bladeElement.append(chord, r_inner, r_outer, relative_pitch)
 
         if not reset:

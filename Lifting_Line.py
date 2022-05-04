@@ -6,18 +6,19 @@ from BEM_code import DU95W150
 ALL ANGLES IN RADIANS!!!
 """
 
+# Cylindrical position vector: (r, theta, z)
+# Carthesian position vector: (x, y, z)
 
 class ControlPoint:
-    def __init__(self, r, theta, z, x0, y0):
-        self.r = r
-        self.theta = theta
-        self.z = z
+    '''Position of control point in reference frame (which has root in rootPos)'''
+    def __init__(self, cylPos, rootPos):
+        self.cylPos = cylPos
 
-        self.x0 = x0
-        self.y0 = y0
+        self.origin = rootPos
 
-        self.x = r * np.cos(theta) + x0
-        self.y = r * np.sin(theta) + y0
+        x = cylPos(0) * np.cos(cylPos(1)) + rootPos(0)
+        y = cylPos(0) * np.sin(cylPos(1)) + rootPos(1)
+        self.pos = (x,y)
 
         self.circulation = None
         self.orientation = None
@@ -26,8 +27,6 @@ class ControlPoint:
         self.circulation = magnitude
         self.orientation = orientation
 
-    def reset(self):
-        self.__init__(self.r, self.theta, self.z, self.x0, self.y0)
 
 
 class Leg:
@@ -77,3 +76,6 @@ class Wake:
     def reset(self):
         [hs.reset() for hs in self.horse_shoes]
         self.__init__(reset=True)
+
+if __name__=="__main__":
+    print("This is a lifting line library, pls dont run this")

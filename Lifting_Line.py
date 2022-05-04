@@ -1,6 +1,11 @@
 import numpy as np
 from BEM_code import DU95W150
 
+def read_from_file(path):
+    f = open(path)
+    lines = f.readlines()
+    out_list = [[float(num) for num in line.strip('\n').split(',')] for line in lines]
+    return np.array(out_list)
 
 """
 ALL ANGLES IN RADIANS!!!
@@ -42,7 +47,8 @@ class Leg:
 
 
 class HorseShoe:
-    def __init__(self, airfoil, chord, delta_r, reset=False):
+    def __init__(self, airfoil, chord, r_inner, r_outer, relative_pitch, reset=False):
+        self.delta_r = r_outer-r_inner #length of lifting line element or blade element
         if not reset:
             self.leg1 = Leg()
             self.leg2 = Leg()
@@ -68,18 +74,51 @@ class HorseShoe:
         self.__init__(reset=True)
 
 
-class Wake:
+class Turbine:
     """
-    INPUTS: N is the number blade elements
+    Turbine parameters, air density, U_inf
     """
-    def __init__(self,N , reset=False):
+    def __init__(self , reset=False):
+        data = read_from_file('DU95W150.csv')
+        self.alpha_lst = data[:, 0]
+        self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
+
+        self.b = 3 # Number of blades
+        self.n_elements = 1 # Divide the blade up in n_elements
+        self.rho = 1.225 # [Kg/m3]
+        self.u_inf = 10 # [m/s] U_infinity = free stream velocity
+        self.radius = 50 # Total radius
+        self.blade_pitch = 0
+        r_start = 0.2*self.radius
+
+        self.bladeElement = list()
+
+        for i in range(self.n_elements):
+            r_inner = r_start + (self.radius - r_start) / self.n_elements * i
+            r_outer = r_start + (self.radius - r_start) / self.n_elements * (i+1)
+            r = np.mean([r_inner, r_outer])
+            # Sorry for hardcoding the equations below- taken from the assignment description :)
+            twist = 14 * (1 - r / self.radius)
+            chord = (3 * (1 - r / self.radius) + 1)
+
+            # BladeElement takes in argument relative_pitch, I assume that this means total? So offset with the blade pitch
+            relative_pitch = self.blade_pitch + twist
+
+            self.bladeElement.append(chord, r_inner, r_outer, relative_pitch)
+
         if not reset:
-            self.N = N
             self.horse_shoes = []
+
+    def cl(self, alpha):
+        return np.interp(alpha, self.alpha_lst, self.cl_lst)
 
     def reset(self):
         [hs.reset() for hs in self.horse_shoes]
         self.__init__(reset=True)
 
+
+
+
 if __name__=="__main__":
     print("This is a lifting line library, pls dont run this")
+    Turbine()

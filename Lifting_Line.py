@@ -1,4 +1,5 @@
 from logging import root
+from multiprocessing.sharedctypes import Value
 import numpy as np
 from BEM_code import DU95W150
 
@@ -23,6 +24,7 @@ def CarthToCyl(x,y,z):
 class Vec:
     '''Reference pos is always in carthesian coordinates.'''
     def __init__(self,localPos, referencePos, bLocalCylindrical=False):
+        self.refPos = referencePos
         if not bLocalCylindrical:
             # Input is in carthesian
             self.xloc = localPos[0]
@@ -40,6 +42,29 @@ class Vec:
 
     def Length(self):
         return np.sqrt(self.xloc*self.xloc + self.yloc*self.yloc + self.zloc*self.zloc)
+
+    # Operator overloading
+
+    def __add__(self, o):
+        # Note that order of operation matters: The reference position of the FIRST entry is kept!
+        x = self.xloc + (o.xglob - self.refPos[0])
+        y = self.yloc + (o.yglob - self.refPos[1])
+        z = self.zloc + (o.zglob - self.refPos[2])
+        return Vec((x,y,z), self.refPos)
+
+    def __mul__(self, scale):
+        x = self.xloc * scale
+        y = self.yloc * scale
+        z = self.zloc * scale
+        return Vec((x,y,z), self.refPos)
+
+    def __sub__(self, o):
+        return self + -1. * o
+
+    def __div__(self, scale):
+        return self * (1/scale)
+
+
 
 class ControlPoint:
     '''Position of control point in reference frame (which has root in rootPos)'''
@@ -68,10 +93,7 @@ class Leg:
             point = Vec(cylPos, rootPos, bLocalCylindrical=True)
             # Set the previous point to end in this new control point
             self.control_points[-1].endPoint = point
-            self.control_points.append(ControlPoint(point))
-        
-
-            
+            self.control_points.append(ControlPoint(point))       
 
     def reset(self):
         [cp.reset() for cp in self.control_points]

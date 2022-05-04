@@ -28,7 +28,7 @@ def CarthToCyl(x,y,z):
 
 class Vec:
     '''Reference pos is always in carthesian coordinates.'''
-    def __init__(self,localPos, referencePos, bLocalCylindrical=False):
+    def __init__(self,localPos, referencePos=(0.,0.,0.), bLocalCylindrical=False):
         self.refPos = referencePos
         if not bLocalCylindrical:
             # Input is in carthesian
@@ -87,7 +87,24 @@ class Filament:
     def set_circulation(self, magnitude):
         self.circulation = magnitude
 
+    def GetInducedFlow(self, pos: Vec):
+        '''Gets the induced flow due to this filament at the global position described by pos. Returns a Vec for the flow (self-centered).'''
+        # Could be done with nice vectors, but just using the algorithm given by the slides
+        d1 = pos - self.startPos
+        d2 = pos - self.endPos
+        d0 = self.endPos - self.startPos
+        r1 = d1.Length()
+        r2 = d2.Length()
+        r12x = d1.yglob*d2.zglob - d1.zglob*d2.yglob
+        r12y = -d1.xglob*d2.zglob + d1.zglob*d2.xglob
+        r12z = d1.xglob*d2.yglob - d1.yglob*d2.xglob
+        r12sqr = r12x*r12x + r12y+r12y + r12z*r12z
+        r01 = d0.xglob*d1.xglob + d0.yglob*d1.yglob + d0.zglob*d1.zglob
+        r02 = d0.xglob*d2.xglob + d0.yglob*d2.yglob + d0.zglob*d2.zglob
 
+        K = self.circulation / (4 * np.pi * r12sqr) * (r01/r1 - r02/r2)
+
+        return Vec((K*r12x, K*r12y, K*r12z))
 
 class Leg:
     def __init__(self, reset=False):

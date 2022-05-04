@@ -47,6 +47,9 @@ class Vec:
 
     # Operator overloading
 
+    def __repr__(self):
+        return "carth=({:.3f}, {:.3f}, {:.3f}), cyl=({:.3f}, {:.3f}, {:.3f}), ref=({:.3f}, {:.3f}, {:.3f})".format(self.xloc, self.yloc, self.zloc, self.rloc, self.thetaloc, self.zloc, self.refPos[0], self.refPos[1], self.refPos[2])
+
     def __add__(self, o):
         # Note that order of operation matters: The reference position of the FIRST entry is kept!
         x = self.xloc + (o.xglob - self.refPos[0])

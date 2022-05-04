@@ -51,8 +51,12 @@ class HorseShoe:
 
 
 class Wake:
-    def __init__(self, reset=False):
+    """
+    INPUTS: N is the number blade elements
+    """
+    def __init__(self,N , reset=False):
         if not reset:
+            self.N = N
             self.horse_shoes = []
 
     def reset(self):

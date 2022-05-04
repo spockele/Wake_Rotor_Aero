@@ -1,4 +1,10 @@
 import numpy as np
+from BEM_code import DU95W150
+
+
+"""
+ALL ANGLES IN RADIANS!!!
+"""
 
 
 class ControlPoint:
@@ -37,12 +43,25 @@ class Leg:
 
 
 class HorseShoe:
-    def __init__(self, reset=False):
+    def __init__(self, airfoil, chord, delta_r, reset=False):
         if not reset:
             self.leg1 = Leg()
             self.leg2 = Leg()
 
+            self.airfoil = airfoil
+            self.chord = chord
+            self.delta_r = delta_r
+
         self.circulation = None
+
+    def set_circulation(self, w, aoa):
+        """
+        Determine the circulation based on the inflow conditions and the airfoil lift curve
+        :param w: inflow velocity
+        :param aoa: angle of attack
+        :return: None
+        """
+        self.circulation = .5 * w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(aoa))
 
     def reset(self):
         self.leg1.reset()

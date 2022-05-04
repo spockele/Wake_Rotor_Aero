@@ -1,3 +1,4 @@
+from logging import root
 import numpy as np
 from BEM_code import DU95W150
 
@@ -6,26 +7,52 @@ from BEM_code import DU95W150
 ALL ANGLES IN RADIANS!!!
 """
 
-# Cylindrical position vector: (r, theta, z)
+# Cylindrical position vector: (r, theta=radians, z)
 # Carthesian position vector: (x, y, z)
+
+def CylToCarth(r,theta,z):
+    x = r * np.cos(theta)
+    y = r * np.sin(theta)
+    return (x,y,z)
+    
+def CarthToCyl(x,y,z):
+    r = np.sqrt(x*x + y*y)
+    theta = np.arctan2(y,x)
+    return (r, theta, z)
+
+class Vec:
+    '''Reference pos is always in carthesian coordinates.'''
+    def __init__(self,localPos, referencePos, bLocalCylindrical=False):
+        if not bLocalCylindrical:
+            # Input is in carthesian
+            self.xloc = localPos[0]
+            self.yloc = localPos[1]
+            self.zloc = localPos[2]
+        
+        if bLocalCylindrical:
+            self.xloc, self.yloc, self.zloc = CylToCarth(localPos)
+
+        # Setting the global coordinates
+        self.xglob = self.xloc + referencePos[0]
+        self.yglob = self.yloc + referencePos[1]
+        self.zglob = self.zloc + referencePos[2]
+
+        # Now update the cylindrical positions
+        self.rloc, self.thetaloc, _ = CarthToCyl(self.xloc, self.yloc, self.zloc)
+
+    def Length(self):
+        return np.sqrt(self.xloc*self.xloc + self.yloc*self.yloc + self.zloc*self.zloc)
 
 class ControlPoint:
     '''Position of control point in reference frame (which has root in rootPos)'''
-    def __init__(self, cylPos, rootPos):
-        self.cylPos = cylPos
-
-        self.origin = rootPos
-
-        x = cylPos(0) * np.cos(cylPos(1)) + rootPos(0)
-        y = cylPos(0) * np.sin(cylPos(1)) + rootPos(1)
-        self.pos = (x,y)
+    def __init__(self, startPos, endPos = None):
+        self.startpos = startPos
 
         self.circulation = None
-        self.orientation = None
+        self.endPoint = None
 
-    def set_circulation(self, magnitude, orientation):
+    def set_circulation(self, magnitude):
         self.circulation = magnitude
-        self.orientation = orientation
 
 
 
@@ -35,6 +62,18 @@ class Leg:
             self.control_points = []
 
         self.circulation = None
+
+    def SetControlPoints(self, arrayOfCylindricalPositions, rootPos):
+        '''Takes an argument like arrayOfCylindricalPositions = [(2,pi,0), (2.1,pi,1),...] and a root reference position in carthesian.'''
+
+        for cylPos in arrayOfCylindricalPositions:
+            point = Vec(cylPos, rootPos, bLocalCylindrical=True)
+            # Set the previous point to end in this new control point
+            self.control_points[-1].endPoint = point
+            self.control_points.append(ControlPoint(point))
+        
+
+            
 
     def reset(self):
         [cp.reset() for cp in self.control_points]

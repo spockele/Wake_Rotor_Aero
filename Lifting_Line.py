@@ -185,7 +185,7 @@ class Turbine:
     """
     Turbine parameters, air density, U_inf
     """
-    def __init__(self , reset=False):
+    def __init__(self, rotation, reset=False):
         # data = read_from_file('DU95W150.csv')
         # self.alpha_lst = data[:, 0]
         # self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
@@ -198,7 +198,7 @@ class Turbine:
         self.blade_pitch = 0
         r_start = 0.2*self.radius
 
-        self.horseshoes = list()
+        self.horseshoes = [[], [], []]
 
         for i in range(self.n_elements):
             r_inner = r_start + (self.radius - r_start) / self.n_elements * i
@@ -211,10 +211,10 @@ class Turbine:
             # BladeElement takes in argument relative_pitch, I assume that this means total? So offset with the blade pitch
             relative_pitch = self.blade_pitch + twist
 
-            self.horseshoes.append(HorseShoe(DU95W150, chord, r_inner, r_outer, relative_pitch))
-
-        if not reset:
-            self.horse_shoes = []
+            for idx, _ in enumerate(self.horseshoes):
+                pos_inner = Vec((r_inner, rotation + idx * np.radians(120), 0))
+                pos_outer = Vec((r_outer, rotation + idx * np.radians(120), 0))
+                self.horseshoes[idx].append(HorseShoe(DU95W150, chord, pos_inner, pos_outer, relative_pitch))
 
     def GetInducedVelocityByTurbine(self, pos: Vec):
         '''Iterates over every horseshoe, gets their induced velocity and plunges them all together.'''
@@ -236,6 +236,10 @@ class Turbine:
         for set in self.horseshoes:
             set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
 
-if __name__=="__main__":
+    def set_circulations_horseshoes(self):
+
+
+
+if __name__ == "__main__":
     print("This is a lifting line library, pls dont run this")
     Turbine()

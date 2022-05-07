@@ -200,6 +200,8 @@ class Turbine:
         self.blade_pitch = 0
         r_start = 0.2*self.radius
 
+        self.rotation = rotation
+
         self.horseshoes = [[], [], []]
 
         for i in range(self.n_elements):
@@ -229,8 +231,8 @@ class Turbine:
         return totalInducedVelocity
 
     def reset(self):
-        [hs.reset() for hs in self.horseshoes]
-        self.__init__(reset=True)
+        [[hs.reset() for hs in blade] for blade in self.horseshoes]
+        self.__init__(self.rotation, reset=True)
 
     def SetInducedVelocityForHorseshoes(self):
         '''For each horseshoe, sets the induced velocity by all the other horseshoes and itself at its centrepoint.'''

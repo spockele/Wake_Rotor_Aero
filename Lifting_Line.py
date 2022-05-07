@@ -230,6 +230,11 @@ class Turbine:
         [hs.reset() for hs in self.horseshoes]
         self.__init__(reset=True)
 
+    def SetInducedVelocityForHorseshoes(self):
+        '''For each horseshoe, sets the induced velocity by all the other horseshoes and itself at its centrepoint.'''
+        # Iterate over the horseshoes to set
+        for set in self.horseshoes:
+            set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
 
 if __name__=="__main__":
     print("This is a lifting line library, pls dont run this")

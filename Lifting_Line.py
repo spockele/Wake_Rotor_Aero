@@ -85,7 +85,7 @@ class Filament:
     def __init__(self, startPos, endPos):
         self.startPos = startPos
         self.endPos = endPos
-        self.centre = startPos + (endPos - startPos)/2
+        self.centre = (endPos + startPos)/2
 
         self.circulation = None
 
@@ -136,10 +136,12 @@ class Leg:
 
 class HorseShoe:
 
-    def __init__(self, airfoil, chord, r_inner, r_outer, twist, reset=False):
-        self.delta_r = r_outer-r_inner #length of lifting line element or blade element
-        self.r_inner = r_inner
-        self.r_outer = r_outer
+    def __init__(self, airfoil, chord, pos_inner, pos_outer, twist, reset=False):
+        self.delta_r = (pos_outer-pos_inner).Length()
+        self.pos_inner = pos_inner
+        self.pos_outer = pos_outer
+        self.pos_centre = (pos_inner + pos_outer)/2 # vorticity needs to be calculated at the blade element center
+
 
         if not reset:
             self.leg1 = Leg()
@@ -150,7 +152,7 @@ class HorseShoe:
             self.twist = twist
 
         self.circulation = None
-        self.induced_velocity = (0, 0, 0)
+        self.induced_velocity = None
 
     def set_circulation(self, w, aoa):
         """
@@ -162,11 +164,11 @@ class HorseShoe:
         self.circulation = .5 * w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(aoa))
 
     def set_velocity_triangle(self, v_inf, omega):
-        vind_z = self.induced_velocity[2]
-        vind_theta = self.induced_velocity[1] * np.cos(self.pos.thetaloc) - self.induced_velocity[0] * np.sin(self.pos.thetaloc)
+        vind_z = self.induced_velocity.zglob
+        vind_theta = self.induced_velocity[1] * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
         w_flow = v_inf + vind_z
-        w_rot = omega * self.pos.rloc + vind_theta
+        w_rot = omega * self.pos_centre.rloc + vind_theta
 
         w = np.sqrt(w_flow*w_flow + w_rot*w_rot)
         phi = np.arctan2(w_flow, w_rot)
@@ -192,14 +194,6 @@ class HorseShoe:
         self.leg1.reset()
         self.leg2.reset()
         self.__init__(reset=True)
-
-class DU95W150: # Airfoil parameters
-    def __init__(self):
-        data = read_from_file('DU95W150.csv')
-        self.alpha_lst = data[:, 0]
-        self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
-
-    def cl(self, alpha): return np.interp(alpha, self.alpha_lst, self.cl_lst)
 
 class Turbine:
     """

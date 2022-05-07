@@ -85,7 +85,7 @@ class Filament:
     def __init__(self, startPos, endPos):
         self.startPos = startPos
         self.endPos = endPos
-        self.centre = (endPos - startPos)/2
+        self.centre = startPos + (endPos - startPos)/2
 
         self.circulation = None
 

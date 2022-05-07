@@ -178,15 +178,22 @@ class HorseShoe:
         self.leg2.reset()
         self.__init__(reset=True)
 
+class DU95W150: # Airfoil parameters
+    def __init__(self):
+        data = read_from_file('DU95W150.csv')
+        self.alpha_lst = data[:, 0]
+        self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
+
+    def cl(self, alpha): return np.interp(alpha, self.alpha_lst, self.cl_lst)
 
 class Turbine:
     """
     Turbine parameters, air density, U_inf
     """
     def __init__(self , reset=False):
-        data = read_from_file('DU95W150.csv')
-        self.alpha_lst = data[:, 0]
-        self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
+        # data = read_from_file('DU95W150.csv')
+        # self.alpha_lst = data[:, 0]
+        # self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
 
         self.b = 3 # Number of blades
         self.n_elements = 1 # Divide the blade up in n_elements
@@ -196,7 +203,7 @@ class Turbine:
         self.blade_pitch = 0
         r_start = 0.2*self.radius
 
-        self.bladeElement = list()
+        self.horseshoe = list()
 
         for i in range(self.n_elements):
             r_inner = r_start + (self.radius - r_start) / self.n_elements * i
@@ -209,8 +216,7 @@ class Turbine:
             # BladeElement takes in argument relative_pitch, I assume that this means total? So offset with the blade pitch
             relative_pitch = self.blade_pitch + twist
 
-            # Hey @fien this throws an error, pls fix.
-            self.bladeElement.append(chord, r_inner, r_outer, relative_pitch)
+            self.horseshoe.append(HorseShoe(DU95W150, chord, r_inner, r_outer, relative_pitch))
 
         if not reset:
             self.horse_shoes = []

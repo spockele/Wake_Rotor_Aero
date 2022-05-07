@@ -149,16 +149,7 @@ class HorseShoe:
         self.circulation = None
         self.induced_velocity = None
 
-    def set_circulation(self, w, aoa):
-        """
-        Determine the circulation based on the inflow conditions and the airfoil lift curve
-        :param w: inflow velocity
-        :param aoa: angle of attack
-        :return: None
-        """
-        self.circulation = .5 * w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(aoa))
-
-    def set_velocity_triangle(self, v_inf, omega):
+    def set_circulation(self, v_inf, omega):
         vind_z = self.induced_velocity.zglob
         vind_theta = self.induced_velocity[1] * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
@@ -168,7 +159,7 @@ class HorseShoe:
         w = np.sqrt(w_flow*w_flow + w_rot*w_rot)
         phi = np.arctan2(w_flow, w_rot)
 
-        return w, phi
+        self.circulation = .5 * w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(phi - self.twist))
 
     def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
         '''Gets the total induced by the horseshoe at a specific point in space.'''

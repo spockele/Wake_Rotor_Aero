@@ -175,17 +175,17 @@ class HorseShoe:
 
     def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
         '''Gets the total induced by the horseshoe at a specific point in space.'''
-        TotalInducedVelocity = Vec((0,0,0))
+        totalInducedVelocity = Vec((0,0,0))
 
         for filament in self.leg1.control_points:
             flowByFilament = filament.GetInducedFlow(pos)
-            TotalInducedVelocity += flowByFilament
+            totalInducedVelocity += flowByFilament
 
         for filament in self.leg2.control_points:
             flowByFilament = filament.GetInducedFlow(pos)
-            TotalInducedVelocity += flowByFilament
+            totalInducedVelocity += flowByFilament
 
-        return TotalInducedVelocity
+        return totalInducedVelocity
             
 
     def reset(self):
@@ -218,7 +218,7 @@ class Turbine:
         self.blade_pitch = 0
         r_start = 0.2*self.radius
 
-        self.horseshoe = list()
+        self.horseshoes = list()
 
         for i in range(self.n_elements):
             r_inner = r_start + (self.radius - r_start) / self.n_elements * i
@@ -231,7 +231,7 @@ class Turbine:
             # BladeElement takes in argument relative_pitch, I assume that this means total? So offset with the blade pitch
             relative_pitch = self.blade_pitch + twist
 
-            self.horseshoe.append(HorseShoe(DU95W150, chord, r_inner, r_outer, relative_pitch))
+            self.horseshoes.append(HorseShoe(DU95W150, chord, r_inner, r_outer, relative_pitch))
 
         if not reset:
             self.horse_shoes = []
@@ -239,8 +239,19 @@ class Turbine:
     def cl(self, alpha):
         return np.interp(alpha, self.alpha_lst, self.cl_lst)
 
+    def GetInducedVelocityByTurbine(self, pos: Vec):
+        '''Iterates over every horseshoe, gets their induced velocity and plunges them all together.'''
+        totalInducedVelocity = Vec((0,0,0))
+
+        for horseshoe in self.horseshoes:
+            inducedVelocityByHorseshoe = horseshoe.GetInducedVelocityInducedByHorseshoe(pos)
+            totalInducedVelocity += inducedVelocityByHorseshoe
+
+        return totalInducedVelocity
+
+
     def reset(self):
-        [hs.reset() for hs in self.horse_shoes]
+        [hs.reset() for hs in self.horseshoes]
         self.__init__(reset=True)
 
 

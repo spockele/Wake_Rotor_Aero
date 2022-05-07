@@ -136,8 +136,8 @@ class HorseShoe:
     def __init__(self, airfoil, chord, pos_inner, pos_outer, twist, reset=False):
         if not reset:
             # TODO: Which leg is the outer one and which one is the inner one? Rename.
-            self.leg1 = Leg()
-            self.leg2 = Leg()
+            self.leg_outer = Leg()
+            self.leg_inner = Leg()
 
             self.airfoil = airfoil
             self.chord = chord
@@ -167,19 +167,19 @@ class HorseShoe:
         '''Gets the total induced by the horseshoe at a specific point in space.'''
         totalInducedVelocity = Vec((0,0,0))
 
-        for filament in self.leg1.control_points:
+        for filament in self.leg_inner.control_points:
             flowByFilament = filament.GetInducedFlow(pos)
             totalInducedVelocity += flowByFilament
 
-        for filament in self.leg2.control_points:
+        for filament in self.leg_outer.control_points:
             flowByFilament = filament.GetInducedFlow(pos)
             totalInducedVelocity += flowByFilament
 
         return totalInducedVelocity
 
     def reset(self):
-        self.leg1.reset()
-        self.leg2.reset()
+        self.leg_inner.reset()
+        self.leg_outer.reset()
         self.__init__(0, 0, 0, 0, 0, reset=True)
 
     def GenerateWakePoints(self, axialVelocity: float, rotSpeed: float, resolution: int, tmax: float):
@@ -210,8 +210,8 @@ class HorseShoe:
         
         # With the points generated, hand over to each leg to convert the control points into filaments
         #TODO: Check if these feed into the right legs.
-        self.leg1.CreateControlPoints(outer_leg_control_points)
-        self.leg2.CreateControlPoints(inner_leg_control_points)
+        self.leg_outer.CreateControlPoints(outer_leg_control_points)
+        self.leg_inner.CreateControlPoints(inner_leg_control_points)
 
 
             

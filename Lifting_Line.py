@@ -173,6 +173,21 @@ class HorseShoe:
 
         return w, phi
 
+    def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
+        '''Gets the total induced by the horseshoe at a specific point in space.'''
+        TotalInducedVelocity = Vec((0,0,0))
+
+        for filament in self.leg1.control_points:
+            flowByFilament = filament.GetInducedFlow(pos)
+            TotalInducedVelocity += flowByFilament
+
+        for filament in self.leg2.control_points:
+            flowByFilament = filament.GetInducedFlow(pos)
+            TotalInducedVelocity += flowByFilament
+
+        return TotalInducedVelocity
+            
+
     def reset(self):
         self.leg1.reset()
         self.leg2.reset()

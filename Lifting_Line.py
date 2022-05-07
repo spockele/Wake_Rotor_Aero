@@ -195,6 +195,8 @@ class Turbine:
         self.rho = 1.225 # [Kg/m3]
         self.u_inf = 10 # [m/s] U_infinity = free stream velocity
         self.radius = 50 # Total radius
+        self.tsr = 10
+        self.omega = self.tsr * self.u_inf / self.radius
         self.blade_pitch = 0
         r_start = 0.2*self.radius
 
@@ -237,7 +239,9 @@ class Turbine:
             set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
 
     def set_circulations_horseshoes(self):
-
+        for blade in self.horseshoes:
+            for set in blade:
+                set.set_circulation(self.u_inf, self.omega)
 
 
 if __name__ == "__main__":

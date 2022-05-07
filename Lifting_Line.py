@@ -85,7 +85,7 @@ class Filament:
     def __init__(self, startPos, endPos):
         self.startPos = startPos
         self.endPos = endPos
-        self.centre = (endPos - startPos)/2
+        self.centre = (endPos + startPos)/2
 
         self.circulation = None
 
@@ -140,6 +140,8 @@ class HorseShoe:
         self.delta_r = r_outer-r_inner #length of lifting line element or blade element
         self.r_inner = r_inner
         self.r_outer = r_outer
+        self.r_centre = (r_inner + r_outer)/2 # vorticity needs to be calculated at the blade element center
+
 
         if not reset:
             self.leg1 = Leg()
@@ -178,7 +180,10 @@ class HorseShoe:
         self.leg2.reset()
         self.__init__(reset=True)
 
-class DU95W150: # Airfoil parameters
+class DU95W150:
+    """
+    Airfoil parameters
+    """
     def __init__(self):
         data = read_from_file('DU95W150.csv')
         self.alpha_lst = data[:, 0]

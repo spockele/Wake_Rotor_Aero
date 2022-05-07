@@ -3,11 +3,6 @@ from multiprocessing.sharedctypes import Value
 import numpy as np
 from BEM_code import DU95W150
 
-def read_from_file(path):
-    f = open(path)
-    lines = f.readlines()
-    out_list = [[float(num) for num in line.strip('\n').split(',')] for line in lines]
-    return np.array(out_list)
 
 """
 ALL ANGLES IN RADIANS!!!
@@ -25,6 +20,7 @@ def CarthToCyl(x,y,z):
     r = np.sqrt(x*x + y*y)
     theta = np.arctan2(y,x)
     return (r, theta, z)
+
 
 class Vec:
     '''Reference pos is always in carthesian coordinates.'''
@@ -79,7 +75,6 @@ class Vec:
         return self * (1/scale)
 
 
-
 class Filament:
     ''' A Vortex Filament from startpos to endpos with strength circulation. '''
     def __init__(self, startPos, endPos):
@@ -111,6 +106,7 @@ class Filament:
 
         return Vec((K*r12x, K*r12y, K*r12z))
 
+
 class Leg:
     def __init__(self, reset=False):
         if not reset:
@@ -137,12 +133,6 @@ class Leg:
 class HorseShoe:
 
     def __init__(self, airfoil, chord, pos_inner, pos_outer, twist, reset=False):
-        self.delta_r = (pos_outer-pos_inner).Length()
-        self.pos_inner = pos_inner
-        self.pos_outer = pos_outer
-        self.pos_centre = (pos_inner + pos_outer)/2 # vorticity needs to be calculated at the blade element center
-
-
         if not reset:
             self.leg1 = Leg()
             self.leg2 = Leg()
@@ -150,6 +140,11 @@ class HorseShoe:
             self.airfoil = airfoil
             self.chord = chord
             self.twist = twist
+
+            self.delta_r = (pos_outer - pos_inner).Length()
+            self.pos_inner = pos_inner
+            self.pos_outer = pos_outer
+            self.pos_centre = (pos_inner + pos_outer) / 2  # vorticity needs to be calculated at the blade element center
 
         self.circulation = None
         self.induced_velocity = None
@@ -188,12 +183,12 @@ class HorseShoe:
             TotalInducedVelocity += flowByFilament
 
         return TotalInducedVelocity
-            
 
     def reset(self):
         self.leg1.reset()
         self.leg2.reset()
-        self.__init__(reset=True)
+        self.__init__(0, 0, 0, 0, 0, reset=True)
+
 
 class Turbine:
     """
@@ -230,13 +225,9 @@ class Turbine:
         if not reset:
             self.horse_shoes = []
 
-    def cl(self, alpha):
-        return np.interp(alpha, self.alpha_lst, self.cl_lst)
-
     def reset(self):
         [hs.reset() for hs in self.horse_shoes]
         self.__init__(reset=True)
-
 
 
 

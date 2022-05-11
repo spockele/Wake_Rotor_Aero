@@ -114,7 +114,7 @@ class Leg:
 
         self.circulation = None
 
-    def CreateControlPoints(self, arrayOfCylindricalPositions: list(Vec), rootPos):
+    def CreateControlPoints(self, arrayOfCylindricalPositions, rootPos):
         '''Takes an argument like arrayOfCylindricalPositions = [(2,pi,0), (2.1,pi,1),...] and a root reference position in carthesian.'''
         
         # Requires a starting point!

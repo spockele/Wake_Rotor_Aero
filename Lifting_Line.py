@@ -2,6 +2,7 @@ from logging import root
 from multiprocessing.sharedctypes import Value
 import numpy as np
 from BEM_code import DU95W150
+import matplotlib.pyplot as plt
 
 
 """
@@ -47,6 +48,13 @@ class Vec:
     def Length(self):
         return np.sqrt(self.xloc*self.xloc + self.yloc*self.yloc + self.zloc*self.zloc)
 
+    def output_xyz(self, glob=False):
+        x = self.xglob if glob else self.xloc
+        y = self.yglob if glob else self.yloc
+        z = self.zglob if glob else self.zloc
+
+        return x, y, z
+
     # Operator overloading
 
     def __repr__(self):
@@ -77,7 +85,7 @@ class Vec:
 
 class Filament:
     ''' A Vortex Filament from startpos to endpos with strength circulation. '''
-    def __init__(self, startPos, endPos):
+    def __init__(self, startPos: Vec, endPos: Vec):
         self.startPos = startPos
         self.endPos = endPos
         self.centre = (endPos + startPos)/2
@@ -106,6 +114,15 @@ class Filament:
 
         return Vec((K*r12x, K*r12y, K*r12z))
 
+    def plot(self, ax=None):
+        if ax is None:
+            plt.scatter(*self.startPos.output_xyz(glob=True))
+            plt.scatter(*self.endPos.output_xyz(glob=True))
+
+        else:
+            ax.scatter(*self.startPos.output_xyz(glob=True))
+            ax.scatter(*self.endPos.output_xyz(glob=True))
+
 
 class Leg:
     def __init__(self, reset=False):
@@ -129,6 +146,10 @@ class Leg:
     def reset(self):
         [cp.reset() for cp in self.control_points]
         self.__init__(reset=True)
+
+    def plot(self, ax=None):
+        for filament in self.control_points:
+            filament.plot(ax=ax)
 
 
 class HorseShoe:
@@ -181,6 +202,11 @@ class HorseShoe:
         self.leg_inner.reset()
         self.leg_outer.reset()
         self.__init__(0, 0, 0, 0, 0, reset=True)
+
+    def plot(self, ax=None):
+        self.leg_inner.plot(ax=ax)
+        self.leg_outer.plot(ax=ax)
+
 
     def GenerateWakePoints(self, axialVelocity: float, rotSpeed: float, resolution: int, tmax: float):
         '''Takes in an axial velocity after the turbine to consider previous points the turbine would have been in in the past.'''
@@ -279,6 +305,11 @@ class Turbine:
         for blade in self.horseshoes:
             for set in blade:
                 set.set_circulation(self.u_inf, self.omega)
+
+    def plot(self, ax=None):
+        for horseshoes in self.horseshoes:
+            for horseshoe in horseshoes:
+                horseshoe.plot(ax=ax)
 
 
 if __name__ == "__main__":

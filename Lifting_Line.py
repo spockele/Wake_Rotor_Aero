@@ -29,7 +29,7 @@ class Vec:
 
         # I make this error too much so this is an attempt at salvation
         if bLocalCylindrical < 0 or bLocalCylindrical > 1:
-            raise ValueError("b-baka, are you sure you passed a tuple into the constructor for Vec like Vec((1,2,3)), and not Vec(1,2,3)?")
+            raise TypeError("b-baka, are you sure you passed a tuple into the constructor for Vec like Vec((1,2,3)), and not Vec(1,2,3)?")
 
         self.refPos = referencePos
         if not bLocalCylindrical:
@@ -172,7 +172,7 @@ class HorseShoe:
             self.pos_centre = (pos_inner + pos_outer) / 2  # vorticity needs to be calculated at the blade element center
 
         self.circulation = None
-        self.induced_velocity = None
+        self.induced_velocity = Vec((0,0,0))
 
         self.vind_z = None
         self.vind_theta = None
@@ -184,7 +184,7 @@ class HorseShoe:
 
     def set_circulation(self, v_inf, omega):
         self.vind_z = self.induced_velocity.zglob
-        self.vind_theta = self.induced_velocity[1] * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
+        self.vind_theta = self.induced_velocity.yglob * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
         self.w_flow = v_inf + self.vind_z
         self.w_rot = omega * self.pos_centre.rloc + self.vind_theta
@@ -194,6 +194,12 @@ class HorseShoe:
         self.alpha = self.phi - self.twist
 
         self.circulation = .5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))
+
+        # Propogate the circulation over to all the filaments in this horseshoe
+        for filament in self.leg_inner.control_points:
+            filament.set_circulation(self.circulation)
+        for filament in self.leg_outer.control_points:
+            filament.set_circulation(self.circulation)
 
     def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
         '''Gets the total induced by the horseshoe at a specific point in space.'''
@@ -283,7 +289,7 @@ class Turbine:
             r_outer = r_start + (self.radius - r_start) / self.n_elements * (i+1)
             r = np.mean([r_inner, r_outer])
             # Sorry for hardcoding the equations below- taken from the assignment description :)
-            twist = 14 * (1 - r / self.radius)
+            twist = np.radians(14 * (1 - r / self.radius))
             chord = (3 * (1 - r / self.radius) + 1)
 
             # BladeElement takes in argument relative_pitch, I assume that this means total? So offset with the blade pitch
@@ -303,8 +309,9 @@ class Turbine:
         '''Iterates over every horseshoe, gets their induced velocity and plunges them all together.'''
         totalInducedVelocity = Vec((0,0,0))
 
-        for horseshoe in self.horseshoes:
-            inducedVelocityByHorseshoe = horseshoe.GetInducedVelocityInducedByHorseshoe(pos)
+        for rotor in self.horseshoes:
+            for horseshoe in rotor:
+                inducedVelocityByHorseshoe = horseshoe.GetInducedVelocityInducedByHorseshoe(pos)
             totalInducedVelocity += inducedVelocityByHorseshoe
 
         return totalInducedVelocity
@@ -316,8 +323,9 @@ class Turbine:
     def SetInducedVelocityForHorseshoes(self):
         '''For each horseshoe, sets the induced velocity by all the other horseshoes and itself at its centrepoint.'''
         # Iterate over the horseshoes to set
-        for set in self.horseshoes:
-            set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
+        for rotor in self.horseshoes:
+            for set in rotor:
+                set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
 
     def set_circulations_horseshoes(self):
         for blade in self.horseshoes:

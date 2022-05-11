@@ -115,13 +115,18 @@ class Filament:
         return Vec((K*r12x, K*r12y, K*r12z))
 
     def plot(self, ax=None):
+        startPosXYZ = self.startPos.output_xyz(glob=True)
+        endPosXYZ = self.endPos.output_xyz(glob=True)
+
+        x, y, z = (startPosXYZ[0], endPosXYZ[0]), (startPosXYZ[1], endPosXYZ[1]), (startPosXYZ[2], endPosXYZ[2])
         if ax is None:
-            plt.scatter(*self.startPos.output_xyz(glob=True))
-            plt.scatter(*self.endPos.output_xyz(glob=True))
+            plt.scatter(*startPosXYZ)
+            plt.scatter(*endPosXYZ)
 
         else:
-            ax.scatter(*self.startPos.output_xyz(glob=True))
-            ax.scatter(*self.endPos.output_xyz(glob=True))
+            ax.scatter(*startPosXYZ)
+            ax.scatter(*endPosXYZ)
+            ax.plot(x, y, z)
 
 
 class Leg:

@@ -136,7 +136,7 @@ class Leg:
 
         self.circulation = None
 
-    def CreateControlPoints(self, arrayOfCylindricalPositions, rootPos):
+    def CreateControlPoints(self, arrayOfCylindricalPositions):
         '''Takes an argument like arrayOfCylindricalPositions = [(2,pi,0), (2.1,pi,1),...] and a root reference position in carthesian.'''
         
         # Requires a starting point!
@@ -144,9 +144,8 @@ class Leg:
         prevPoint = arrayOfCylindricalPositions[0]
         arrayOfCylindricalPositions.pop(0)
         for cylPos in arrayOfCylindricalPositions:
-            point = Vec((cylPos.x, cylPos.y, cylPos.z), rootPos, bLocalCylindrical=True)
-            self.control_points.append(Filament(point, prevPoint))  
-            prevPoint = point     
+            self.control_points.append(Filament(cylPos, prevPoint))  
+            prevPoint = cylPos     
 
     def reset(self):
         [cp.reset() for cp in self.control_points]
@@ -229,18 +228,17 @@ class HorseShoe:
             dx = t*axialVelocity
 
             # Every horseshoe has a pos_inner and pos_outer, so do the calculation twice
-            dy_inner = self.pos_inner.r * np.sin(rotSpeed * t)
-            dz_inner = self.pos_inner.r * np.cos(rotSpeed * t)
+            dy_inner = self.pos_inner.rloc * np.sin(rotSpeed * t)
+            dz_inner = self.pos_inner.rloc * np.cos(rotSpeed * t)
             pos_inner_trail = self.pos_inner + Vec((dx, dy_inner, dz_inner))
             inner_leg_control_points.append(pos_inner_trail)
 
-            dy_outer = self.pos_outer.r * np.sin(rotSpeed * t)
-            dz_outer = self.pos_outer.r * np.cos(rotSpeed * t)
+            dy_outer = self.pos_outer.rloc * np.sin(rotSpeed * t)
+            dz_outer = self.pos_outer.rloc * np.cos(rotSpeed * t)
             pos_outer_trail = self.pos_outer + Vec((dx,dy_outer, dz_outer))
             outer_leg_control_points.append(pos_outer_trail)
         
         # With the points generated, hand over to each leg to convert the control points into filaments
-        #TODO: Check if these feed into the right legs.
         self.leg_outer.CreateControlPoints(outer_leg_control_points)
         self.leg_inner.CreateControlPoints(inner_leg_control_points)
 
@@ -257,6 +255,8 @@ class Turbine:
         # self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
 
         self.b = 3 # Number of blades
+        self.wakePointResolution = 5
+        self.twakemax = 5.
         self.n_elements = 1 # Divide the blade up in n_elements
         self.rho = 1.225 # [Kg/m3]
         self.u_inf = 10 # [m/s] U_infinity = free stream velocity
@@ -281,10 +281,15 @@ class Turbine:
             # BladeElement takes in argument relative_pitch, I assume that this means total? So offset with the blade pitch
             relative_pitch = self.blade_pitch + twist
 
+            # Horseshoes is a 2d array of horseshoes, one for each rotor. This iterates over each rotor.
             for idx, _ in enumerate(self.horseshoes):
                 pos_inner = Vec((r_inner, rotation + idx * np.radians(120), 0), referencePos=referencePos)
                 pos_outer = Vec((r_outer, rotation + idx * np.radians(120), 0), referencePos=referencePos)
-                self.horseshoes[idx].append(HorseShoe(DU95W150, chord, pos_inner, pos_outer, relative_pitch))
+
+                horseshoeToAdd = HorseShoe(DU95W150, chord, pos_inner, pos_outer, relative_pitch)
+                horseshoeToAdd.GenerateWakePoints(self.u_inf, self.omega, self.wakePointResolution, self.twakemax)
+                
+                self.horseshoes[idx].append(horseshoeToAdd)
 
     def GetInducedVelocityByTurbine(self, pos: Vec):
         '''Iterates over every horseshoe, gets their induced velocity and plunges them all together.'''
@@ -319,4 +324,4 @@ class Turbine:
 
 if __name__ == "__main__":
     print("This is a lifting line library, pls dont run this")
-    Turbine()
+    #Turbine()

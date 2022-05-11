@@ -133,4 +133,5 @@ dmypy.json
 *.pdf
 *.png
 aidasnotepad.py
+fiensnotepad.py
 .vscode/

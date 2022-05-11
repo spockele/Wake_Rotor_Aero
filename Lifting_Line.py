@@ -1,7 +1,6 @@
 from logging import root
 from multiprocessing.sharedctypes import Value
 import numpy as np
-import matplotlib.pyplot as plt
 from BEM_code import DU95W150
 import matplotlib.pyplot as plt
 from read_write import read_from_file, write_to_file

@@ -3,6 +3,8 @@ import scipy.integrate as spig
 import matplotlib.pyplot as plt
 import time
 
+from read_write import read_from_file
+
 
 relaxation = 0.1
 rho = 1.225
@@ -614,13 +616,6 @@ def solve_a(cp):
 def interpolate(value1, value2, co1, co2, co_interpolation):
     dy_dx = (value2 - value1) / (co2 - co1)
     return dy_dx * (co_interpolation - co1) + value1
-
-
-def read_from_file(path):
-    f = open(path)
-    lines = f.readlines()
-    out_list = [[float(num) for num in line.strip('\n').split(',')] for line in lines]
-    return np.array(out_list)
 
 
 def convergence():

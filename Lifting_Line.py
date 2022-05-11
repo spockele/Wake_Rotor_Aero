@@ -220,7 +220,7 @@ class Turbine:
     """
     Turbine parameters, air density, U_inf
     """
-    def __init__(self, rotation, reset=False):
+    def __init__(self, rotation, referencePos=(0.,0.,0.), reset=False):
         # data = read_from_file('DU95W150.csv')
         # self.alpha_lst = data[:, 0]
         # self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
@@ -251,8 +251,8 @@ class Turbine:
             relative_pitch = self.blade_pitch + twist
 
             for idx, _ in enumerate(self.horseshoes):
-                pos_inner = Vec((r_inner, rotation + idx * np.radians(120), 0))
-                pos_outer = Vec((r_outer, rotation + idx * np.radians(120), 0))
+                pos_inner = Vec((r_inner, rotation + idx * np.radians(120), 0), referencePos=referencePos)
+                pos_outer = Vec((r_outer, rotation + idx * np.radians(120), 0), referencePos=referencePos)
                 self.horseshoes[idx].append(HorseShoe(DU95W150, chord, pos_inner, pos_outer, relative_pitch))
 
     def GetInducedVelocityByTurbine(self, pos: Vec):

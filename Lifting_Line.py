@@ -29,7 +29,7 @@ class Vec:
 
         # I make this error too much so this is an attempt at salvation
         if bLocalCylindrical < 0 or bLocalCylindrical > 1:
-            raise ValueError("b-baka, are you sure you passed a tuple into the constructor for Vec like Vec((1,2,3)), and not Vec(1,2,3)?")
+            raise TypeError("b-baka, are you sure you passed a tuple into the constructor for Vec like Vec((1,2,3)), and not Vec(1,2,3)?")
 
         self.refPos = referencePos
         if not bLocalCylindrical:
@@ -174,11 +174,11 @@ class HorseShoe:
             self.pos_centre = (pos_inner + pos_outer) / 2  # vorticity needs to be calculated at the blade element center
 
         self.circulation = None
-        self.induced_velocity = None
+        self.induced_velocity = Vec((0,0,0))
 
     def set_circulation(self, v_inf, omega):
         vind_z = self.induced_velocity.zglob
-        vind_theta = self.induced_velocity[1] * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
+        vind_theta = self.induced_velocity.yglob * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
         w_flow = v_inf + vind_z
         w_rot = omega * self.pos_centre.rloc + vind_theta
@@ -187,6 +187,12 @@ class HorseShoe:
         phi = np.arctan2(w_flow, w_rot)
 
         self.circulation = .5 * w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(phi - self.twist))
+
+        # Propogate the circulation over to all the filaments in this horseshoe
+        for filament in self.leg_inner.control_points:
+            filament.set_circulation(self.circulation)
+        for filament in self.leg_outer.control_points:
+            filament.set_circulation(self.circulation)
 
     def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
         '''Gets the total induced by the horseshoe at a specific point in space.'''
@@ -295,8 +301,9 @@ class Turbine:
         '''Iterates over every horseshoe, gets their induced velocity and plunges them all together.'''
         totalInducedVelocity = Vec((0,0,0))
 
-        for horseshoe in self.horseshoes:
-            inducedVelocityByHorseshoe = horseshoe.GetInducedVelocityInducedByHorseshoe(pos)
+        for rotor in self.horseshoes:
+            for horseshoe in rotor:
+                inducedVelocityByHorseshoe = horseshoe.GetInducedVelocityInducedByHorseshoe(pos)
             totalInducedVelocity += inducedVelocityByHorseshoe
 
         return totalInducedVelocity
@@ -308,8 +315,9 @@ class Turbine:
     def SetInducedVelocityForHorseshoes(self):
         '''For each horseshoe, sets the induced velocity by all the other horseshoes and itself at its centrepoint.'''
         # Iterate over the horseshoes to set
-        for set in self.horseshoes:
-            set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
+        for rotor in self.horseshoes:
+            for set in rotor:
+                set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
 
     def set_circulations_horseshoes(self):
         for blade in self.horseshoes:

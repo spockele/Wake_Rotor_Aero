@@ -281,7 +281,7 @@ class Turbine:
             r_outer = r_start + (self.radius - r_start) / self.n_elements * (i+1)
             r = np.mean([r_inner, r_outer])
             # Sorry for hardcoding the equations below- taken from the assignment description :)
-            twist = 14 * (1 - r / self.radius)
+            twist = np.radians(14 * (1 - r / self.radius))
             chord = (3 * (1 - r / self.radius) + 1)
 
             # BladeElement takes in argument relative_pitch, I assume that this means total? So offset with the blade pitch

@@ -114,19 +114,17 @@ class Filament:
 
         return Vec((K*r12x, K*r12y, K*r12z))
 
-    def plot(self, ax=None):
+    def plot(self, colour, ax=None):
         startPosXYZ = self.startPos.output_xyz(glob=True)
         endPosXYZ = self.endPos.output_xyz(glob=True)
 
         x, y, z = (startPosXYZ[0], endPosXYZ[0]), (startPosXYZ[1], endPosXYZ[1]), (startPosXYZ[2], endPosXYZ[2])
         if ax is None:
-            plt.scatter(*startPosXYZ)
-            plt.scatter(*endPosXYZ)
+            plt.scatter(*startPosXYZ, color=colour)
 
         else:
-            ax.scatter(*startPosXYZ)
-            ax.scatter(*endPosXYZ)
-            ax.plot(x, y, z)
+            ax.scatter(*startPosXYZ, color=colour)
+            ax.plot(x, y, z, color=colour)
 
 
 class Leg:
@@ -151,9 +149,9 @@ class Leg:
         [cp.reset() for cp in self.control_points]
         self.__init__(reset=True)
 
-    def plot(self, ax=None):
+    def plot(self, colour, ax=None):
         for filament in self.control_points:
-            filament.plot(ax=ax)
+            filament.plot(colour, ax=ax)
 
 
 class HorseShoe:
@@ -176,17 +174,26 @@ class HorseShoe:
         self.circulation = None
         self.induced_velocity = None
 
+        self.vind_z = None
+        self.vind_theta = None
+        self.w_flow = None
+        self.w_rot = None
+        self.w = None
+        self.phi = None
+        self.alpha = None
+
     def set_circulation(self, v_inf, omega):
-        vind_z = self.induced_velocity.zglob
-        vind_theta = self.induced_velocity[1] * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
+        self.vind_z = self.induced_velocity.zglob
+        self.vind_theta = self.induced_velocity[1] * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
-        w_flow = v_inf + vind_z
-        w_rot = omega * self.pos_centre.rloc + vind_theta
+        self.w_flow = v_inf + self.vind_z
+        self.w_rot = omega * self.pos_centre.rloc + self.vind_theta
 
-        w = np.sqrt(w_flow*w_flow + w_rot*w_rot)
-        phi = np.arctan2(w_flow, w_rot)
+        self.w = np.sqrt(self.w_flow*self.w_flow + self.w_rot*self.w_rot)
+        self.phi = np.arctan2(self.w_flow, self.w_rot)
+        self.alpha = self.phi - self.twist
 
-        self.circulation = .5 * w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(phi - self.twist))
+        self.circulation = .5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))
 
     def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
         '''Gets the total induced by the horseshoe at a specific point in space.'''
@@ -207,9 +214,10 @@ class HorseShoe:
         self.leg_outer.reset()
         self.__init__(0, 0, 0, 0, 0, reset=True)
 
-    def plot(self, ax=None):
-        self.leg_inner.plot(ax=ax)
-        self.leg_outer.plot(ax=ax)
+    def plot(self, base_colour, ax=None):
+        colour = base_colour * (self.pos_centre.rloc + 50) / (2*50)
+        self.leg_inner.plot(colour, ax=ax)
+        self.leg_outer.plot(colour, ax=ax)
 
 
     def GenerateWakePoints(self, axialVelocity: float, rotSpeed: float, resolution: int, tmax: float):
@@ -226,13 +234,13 @@ class HorseShoe:
             z = t*axialVelocity
 
             # Every horseshoe has a pos_inner and pos_outer, so do the calculation twice
-            y_inner = self.pos_inner.rloc * np.sin(rotSpeed * t)
-            x_inner = self.pos_inner.rloc * np.cos(rotSpeed * t)
+            y_inner = self.pos_inner.rloc * np.sin(rotSpeed * t + self.pos_inner.thetaloc)
+            x_inner = self.pos_inner.rloc * np.cos(rotSpeed * t + self.pos_inner.thetaloc)
             pos_inner_trail = Vec((x_inner, y_inner, z))
             inner_leg_control_points.append(pos_inner_trail)
 
-            y_outer = self.pos_outer.rloc * np.sin(rotSpeed * t)
-            x_outer = self.pos_outer.rloc * np.cos(rotSpeed * t)
+            y_outer = self.pos_outer.rloc * np.sin(rotSpeed * t + self.pos_outer.thetaloc)
+            x_outer = self.pos_outer.rloc * np.cos(rotSpeed * t + self.pos_outer.thetaloc)
             pos_outer_trail = Vec((x_outer, y_outer, z))
             outer_leg_control_points.append(pos_outer_trail)
         
@@ -317,9 +325,11 @@ class Turbine:
                 set.set_circulation(self.u_inf, self.omega)
 
     def plot(self, ax=None):
-        for horseshoes in self.horseshoes:
+        for i, horseshoes in enumerate(self.horseshoes):
+            colour = np.zeros(3)
+            colour[i] = 1
             for horseshoe in horseshoes:
-                horseshoe.plot(ax=ax)
+                horseshoe.plot(colour, ax=ax)
 
 
 if __name__ == "__main__":

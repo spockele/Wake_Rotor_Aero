@@ -8,6 +8,18 @@ relaxation = 0.1
 rho = 1.225
 p_atm = 101325 #pa
 
+def write_to_file(array, path):
+    lines = []
+    for row in array:
+        line = ''
+        for num in row:
+            line = line + f'{num},'
+
+        lines.append(line[:-1] + '\n')
+
+    f = open(path, 'w')
+    f.writelines(lines)
+    f.close()
 
 class DU95W150:
     def __init__(self):
@@ -251,6 +263,7 @@ class Turbine:
         for i, lamda in enumerate(tsr):
             self.blade.determine_cp_ct(10, lamda, 0, 0, 0)
             cp[i] = self.blade.c_power
+            cT[i] = self.blade.c_thrust
             thrust[i] = self.blade.thrust
             torque[i] = self.blade.power / (lamda * 10 / self.blade.r)
 
@@ -292,6 +305,8 @@ class Turbine:
         linestyles = ('dashed', 'solid', 'dotted')
         for j, tsr in enumerate((6, 8, 10)):
             self.blade.determine_cp_ct(10, tsr, 0, 0, 0)
+            cp = self.blade.c_power
+            cT = self.blade.c_thrust
             pn, pt = self.blade.p_n_list, self.blade.p_t_list
             alpha, phi, a, a_prime, twist = np.zeros((5, len(self.blade.blade_elements)))
             for i, be in enumerate(self.blade.blade_elements):
@@ -300,6 +315,9 @@ class Turbine:
                 a[i] = be.a
                 a_prime[i] = be.a_prime
                 twist[i] = be.beta
+            Big_array = [self.blade.r_list, alpha, phi, pn, pt]
+            write_to_file(Big_array, './saved_data/BEM_r_alpha_phi_pn_pt_tsr_%d.txt'%(tsr))
+            write_to_file([[cp,cT]], './saved_data/BEM_cp_cT_tsr_%d.txt'%(tsr))
 
             plt.figure(1, figsize=(5, 5))
             plt.plot(self.blade.r_list, alpha, linestyle=linestyles[j], color='tab:blue', label=f'Angle of Attack ($\\alpha$) ($\\lambda={tsr}$)')

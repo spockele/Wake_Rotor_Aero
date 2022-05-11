@@ -1,6 +1,7 @@
 from logging import root
 from multiprocessing.sharedctypes import Value
 import numpy as np
+import matplotlib.pyplot as plt
 from BEM_code import DU95W150
 import matplotlib.pyplot as plt
 
@@ -22,6 +23,69 @@ def CarthToCyl(x,y,z):
     theta = np.arctan2(y,x)
     return (r, theta, z)
 
+def write_to_file(array, path):
+    lines = []
+    for row in array:
+        line = ''
+        for num in row:
+            line = line + f'{num},'
+
+        lines.append(line[:-1] + '\n')
+
+    f = open(path, 'w')
+    f.writelines(lines)
+    f.close()
+
+def read_from_file(path):
+    f = open(path)
+    lines = f.readlines()
+    out_list = [[float(num) for num in line.strip('\n').split(',')] for line in lines]
+    return np.array(out_list)
+
+def compare_to_BEM():
+    linestyles = ('dashed', 'solid', 'dotted')
+    for j, tsr in enumerate((6, 8, 10)):
+        [r_BEM, alpha_BEM, phi_BEM, pn_BEM, pt_BEM] = read_from_file('./saved_data/BEM_r_alpha_phi_pn_pt_tsr_%d.txt'%(tsr))
+        [[cp_BEM, cT_BEM]] = read_from_file('./saved_data/BEM_cp_cT_tsr_%d.txt'%(tsr))
+
+        plt.figure(1, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
+        plt.plot(r_BEM, alpha_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
+
+        plt.figure(2, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
+        plt.plot(r_BEM, np.degrees(phi_BEM), linestyle=linestyles[j], color='tab:orange', label=f'BEM ($\\lambda={tsr}$)')
+
+        plt.figure(3, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Normal force ($p_{n}$) [N/m]')
+        plt.plot(r_BEM, pn_BEM, linestyle=linestyles[j], color='tab:blue', label='BEM ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_BEM))
+
+        plt.figure(4, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential force ($p_{t}$) [N/m]');
+        plt.plot(r_BEM, pt_BEM, linestyle=linestyles[j], color='tab:orange', label='BEM ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_BEM))
+
+    plt.figure(1, figsize=(5, 5))
+    plt.grid()
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('./figures/Angle_of_attack.pdf')
+
+    plt.figure(2, figsize=(5, 5))
+    plt.grid()
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('./figures/Inflow_angle.pdf')
+
+    plt.figure(3, figsize=(5, 5))
+    plt.grid()
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('./figures/Normal_force.pdf')
+
+    plt.figure(4, figsize=(5, 5))
+    plt.grid()
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('./figures/Tangencial_force.pdf')
+
+    plt.show()
+    return
 
 class Vec:
     '''Reference pos is always in carthesian coordinates.'''
@@ -342,4 +406,4 @@ class Turbine:
 
 if __name__ == "__main__":
     print("This is a lifting line library, pls dont run this")
-    #Turbine()
+    compare_to_BEM()

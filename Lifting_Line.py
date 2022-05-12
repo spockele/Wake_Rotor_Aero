@@ -287,11 +287,10 @@ class HorseShoe:
     def GetForcesAndFactors(self,rho,v_inf,omega,turbineRadius):
         self.LiftDensity = 0.5*rho*self.w*self.w* self.chord*self.airfoil.cl(np.degrees(self.alpha))
         self.DragDensity = 0.5*rho*self.w*self.w* self.chord*self.airfoil.cd(np.degrees(self.alpha))
-        self.pn = np.sin(self.DragDensity)+np.cos(self.LiftDensity)
-        self.pt = np.sin(self.LiftDensity) - np.cos(self.DragDensity)
+        self.pn = self.DragDensity*np.sin(self.phi)+self.LiftDensity*np.cos(self.phi)
+        self.pt = self.LiftDensity*np.sin(self.phi)-self.DragDensity*np.cos(self.phi)
         self.a = 1-self.w_flow/v_inf
         self.a_prime = self.w_rot/omega/turbineRadius - 1
-        return self.pt, self.pn, self.a, self.a_prime
 
     def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
         '''Gets the total induced by the horseshoe at a specific point in space.'''
@@ -448,7 +447,7 @@ class Turbine:
             for horseshoe in horseshoes:
                 horseshoe.plot(colour, ax=ax)
 
-    def extract_information(self):
+    def extract_information_N_write(self):
         out_array = np.empty((3, 7, len(self.horseshoes[0])))
         for i, blade in enumerate(self.horseshoes):
             for j, horseshoe in enumerate(blade):
@@ -457,12 +456,14 @@ class Turbine:
                 out_array[i, 2, j] = horseshoe.phi
                 out_array[i, 3, j] = horseshoe.pn
                 out_array[i, 4, j] = horseshoe.pt
-                out_array[i, 5, j] = 0
-                out_array[i, 6, j] = 0
+                out_array[i, 5, j] = horseshoe.a
+                out_array[i, 6, j] = horseshoe.a_prime
+        return out_array
 
 
 
 
 if __name__ == "__main__":
     print("This is a lifting line library, pls dont run this")
-    compare_to_BEM()
+    # compare_to_BEM()
+    Turbine.extract_information_N_write()

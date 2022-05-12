@@ -159,7 +159,8 @@ class Filament:
 
         K = self.circulation / (4 * np.pi * r12sqr) * (r01/r1 - r02/r2)
 
-        return Vec((K*r12x, K*r12y, K*r12z))
+        inducedVel = Vec((K*r12x, K*r12y, K*r12z))
+        return inducedVel
 
     def plot(self, colour, ax=None):
         startPosXYZ = self.startPos.output_xyz(glob=True)
@@ -249,8 +250,9 @@ class HorseShoe:
         self.circulation = .5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))
 
         # Propogate the circulation over to all the filaments in this horseshoe
+        # TODO: ABSOLUTELY DOUBLE CHECK IF WE MUTLIPLY THE RIGHT ONE WITH -1
         for filament in self.leg_inner.control_points:
-            filament.set_circulation(self.circulation)
+            filament.set_circulation(-1*self.circulation)
         for filament in self.leg_outer.control_points:
             filament.set_circulation(self.circulation)
 
@@ -385,7 +387,7 @@ class Turbine:
         for rotor in self.horseshoes:
             for horseshoe in rotor:
                 inducedVelocityByHorseshoe = horseshoe.GetInducedVelocityInducedByHorseshoe(pos)
-            totalInducedVelocity += inducedVelocityByHorseshoe
+                totalInducedVelocity += inducedVelocityByHorseshoe
 
         return totalInducedVelocity
 

@@ -201,10 +201,10 @@ class Filament:
 
         x, y, z = (startPosXYZ[0], endPosXYZ[0]), (startPosXYZ[1], endPosXYZ[1]), (startPosXYZ[2], endPosXYZ[2])
         if ax is None:
-            plt.scatter(*startPosXYZ, color=colour)
+            plt.scatter(*startPosXYZ, marker='.', color=colour)
 
         else:
-            ax.scatter(*startPosXYZ, color=colour)
+            # ax.scatter(*startPosXYZ, marker='.', color=colour)
             ax.plot(x, y, z, color=colour)
 
 
@@ -221,9 +221,8 @@ class Leg:
         # Requires a starting point!
         # TODO: Aida: Make this iterate on index and not in this stupid way with popping
         prevPoint = arrayOfCylindricalPositions[0]
-        arrayOfCylindricalPositions.pop(0)
-        for cylPos in arrayOfCylindricalPositions:
-            self.control_points.append(Filament(cylPos, prevPoint))  
+        for cylPos in arrayOfCylindricalPositions[1:]:
+            self.control_points.append(Filament(prevPoint, cylPos))
             prevPoint = cylPos     
 
     def reset(self):
@@ -271,7 +270,7 @@ class HorseShoe:
         self.vind_theta = self.induced_velocity.yglob * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
         self.w_flow = v_inf + self.vind_z
-        self.w_rot = omega * self.pos_centre.rloc - self.vind_theta
+        self.w_rot = omega * self.pos_centre.rloc + self.vind_theta
 
         self.w = np.sqrt(self.w_flow*self.w_flow + self.w_rot*self.w_rot)
         self.phi = np.arctan2(self.w_flow, self.w_rot)
@@ -281,15 +280,16 @@ class HorseShoe:
             previousCirculation = 0
         else:
             previousCirculation = self.circulation
-        
-        self.circulation = .5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))
+
+        f = .25
+        self.circulation = f * (.5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))) + (1-f) * previousCirculation
 
         # Propogate the circulation over to all the filaments in this horseshoe
         # TODO: ABSOLUTELY DOUBLE CHECK IF WE MUTLIPLY THE RIGHT ONE WITH -1
         for filament in self.leg_inner.control_points:
-            filament.set_circulation(-1*self.circulation)
-        for filament in self.leg_outer.control_points:
             filament.set_circulation(self.circulation)
+        for filament in self.leg_outer.control_points:
+            filament.set_circulation(-1*self.circulation)
 
         return self.circulation - previousCirculation
 
@@ -322,7 +322,7 @@ class HorseShoe:
 
     def plot(self, base_colour, ax=None):
         colour = base_colour * (self.pos_centre.rloc + 50) / (2*50)
-        # self.leg_inner.plot(colour, ax=ax)
+        self.leg_inner.plot(colour, ax=ax)
         self.leg_outer.plot(colour, ax=ax)
 
 
@@ -377,15 +377,15 @@ class Turbine:
         # self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
 
         self.b = 3 # Number of blades
-        self.wakePointResolution = 20
-        self.twakemax = 1
-        self.n_elements = 10 # Divide the blade up in n_elements
+        self.wakePointResolution = 10
+        self.twakemax = 1*np.pi
+        self.n_elements = 50 # Divide the blade up in n_elements
         self.rho = 1.225 # [Kg/m3]
         self.u_inf = 10 # [m/s] U_infinity = free stream velocity
         self.radius = 50 # Total radius
         self.tsr = 10
         self.omega = self.tsr * self.u_inf / self.radius
-        self.blade_pitch = 0
+        self.blade_pitch = np.radians(-2)
         r_start = 0.2*self.radius
 
         airfoil = DU95W150()
@@ -397,6 +397,7 @@ class Turbine:
         for i in range(self.n_elements):
             r_inner = r_start + (self.radius - r_start) / self.n_elements * i
             r_outer = r_start + (self.radius - r_start) / self.n_elements * (i+1)
+
             r = np.mean([r_inner, r_outer])
             # Sorry for hardcoding the equations below- taken from the assignment description :)
             twist = np.radians(14 * (1 - r / self.radius))
@@ -440,14 +441,16 @@ class Turbine:
     def set_circulations_horseshoes(self):
         '''Sets the circulation for all the horseshoes based on their internally saved flow deviation vector. Returns the change in circulation (delta gamma) for the element that has it as the highest.'''
         highestDeltaGamma = 0
-        for blade in self.horseshoes:
-            for set in blade:
+        highestIndex = 0, 0
+        for j, blade in enumerate(self.horseshoes):
+            for i, set in enumerate(blade):
                 # Calls function that updates, and returns the change.
                 deltaGamma = set.set_circulation(self.u_inf, self.omega)
-                if deltaGamma > highestDeltaGamma:
+                if abs(deltaGamma) > abs(highestDeltaGamma):
                     highestDeltaGamma = deltaGamma
+                    highestIndex = j, i
 
-        return highestDeltaGamma
+        return highestIndex, highestDeltaGamma
 
     def plot(self, ax=None):
         for i, horseshoes in enumerate(self.horseshoes):
@@ -460,6 +463,7 @@ class Turbine:
         out_array = np.empty((3, 7, len(self.horseshoes[0])))
         for i, blade in enumerate(self.horseshoes):
             for j, horseshoe in enumerate(blade):
+                horseshoe.GetForcesAndFactors(self.rho, self.u_inf, self.omega, self.radius)
                 out_array[i, 0, j] = horseshoe.pos_centre.rloc
                 out_array[i, 1, j] = horseshoe.alpha
                 out_array[i, 2, j] = horseshoe.phi
@@ -467,12 +471,10 @@ class Turbine:
                 out_array[i, 4, j] = horseshoe.pt
                 out_array[i, 5, j] = horseshoe.a
                 out_array[i, 6, j] = horseshoe.a_prime
+
+        write_to_file(out_array, f'saved_data/LL_r_alpha_phi_pn_pt_a_aprime_tsr_{self.tsr}.txt')
         return out_array
-
-
 
 
 if __name__ == "__main__":
     print("This is a lifting line library, pls dont run this")
-    # compare_to_BEM()
-    Turbine.extract_information_N_write()

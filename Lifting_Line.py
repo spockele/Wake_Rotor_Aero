@@ -170,22 +170,30 @@ class Filament:
 
     def GetInducedFlow(self, pos: Vec):
         '''Gets the induced flow due to this filament at the global position described by pos. Returns a Vec for the flow (self-centered).'''
-        # Could be done with nice vectors, but just using the algorithm given by the slides
-        d1 = pos - self.startPos
-        d2 = pos - self.endPos
-        d0 = self.endPos - self.startPos
-        r1 = d1.Length()
-        r2 = d2.Length()
-        r12x = d1.yglob*d2.zglob - d1.zglob*d2.yglob
-        r12y = -d1.xglob*d2.zglob + d1.zglob*d2.xglob
-        r12z = d1.xglob*d2.yglob - d1.yglob*d2.xglob
-        r12sqr = r12x*r12x + r12y+r12y + r12z*r12z
-        r01 = d0.xglob*d1.xglob + d0.yglob*d1.yglob + d0.zglob*d1.zglob
-        r02 = d0.xglob*d2.xglob + d0.yglob*d2.yglob + d0.zglob*d2.zglob
+        # Ugly copy all the thingssss
+        xp = pos.xglob
+        yp = pos.yglob
+        zp = pos.zglob
 
-        K = self.circulation / (4 * np.pi * r12sqr) * (r01/r1 - r02/r2)
+        x1 = self.startPos.xglob
+        y1 = self.startPos.yglob
+        z1 = self.startPos.zglob
 
-        return Vec((K*r12x, K*r12y, K*r12z))
+        x2 = self.endPos.xglob
+        y2 = self.endPos.yglob
+        z2 = self.endPos.zglob
+
+        r1 = np.sqrt((xp - x1)**2 + (yp - y1)**2 + (zp - z1)**2)
+        r2 = np.sqrt((xp - x2)**2 + (yp - y2)**2 + (zp - z2)**2)
+        r12x = (yp - y1)*(zp - z2) - (zp - z1)*(yp - y2)
+        r12y = -1*(xp - x1)*(zp - z2) + (zp - z1)*(xp - x2)
+        r12z = (xp - x1)*(yp - y2) - (yp - y1)*(xp - x2)
+        r12sqr = r12x**2 + r12y**2 + r12z**2
+        r01 = (x2 - x1)*(xp - x1) + (y2 - y1)*(yp - y1) + (z2 - z1)*(zp - z1)
+        r02 = (x2 - x1)*(xp - x2) + (y2 - y1)*(yp - y2) + (z2 - z1)*(zp - z2)
+        k = self.circulation/(4*np.pi*r12sqr)*(r01/r1 - r02/r2)
+        inducedVel = Vec((k*r12x, k*r12y, k*r12z))
+        return inducedVel
 
     def plot(self, colour, ax=None):
         startPosXYZ = self.startPos.output_xyz(glob=True)
@@ -263,7 +271,7 @@ class HorseShoe:
         self.vind_theta = self.induced_velocity.yglob * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
         self.w_flow = v_inf + self.vind_z
-        self.w_rot = omega * self.pos_centre.rloc + self.vind_theta
+        self.w_rot = omega * self.pos_centre.rloc - self.vind_theta
 
         self.w = np.sqrt(self.w_flow*self.w_flow + self.w_rot*self.w_rot)
         self.phi = np.arctan2(self.w_flow, self.w_rot)
@@ -277,8 +285,9 @@ class HorseShoe:
         self.circulation = .5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))
 
         # Propogate the circulation over to all the filaments in this horseshoe
+        # TODO: ABSOLUTELY DOUBLE CHECK IF WE MUTLIPLY THE RIGHT ONE WITH -1
         for filament in self.leg_inner.control_points:
-            filament.set_circulation(self.circulation)
+            filament.set_circulation(-1*self.circulation)
         for filament in self.leg_outer.control_points:
             filament.set_circulation(self.circulation)
 
@@ -368,7 +377,7 @@ class Turbine:
         # self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
 
         self.b = 3 # Number of blades
-        self.wakePointResolution = 5
+        self.wakePointResolution = 20
         self.twakemax = 1
         self.n_elements = 10 # Divide the blade up in n_elements
         self.rho = 1.225 # [Kg/m3]
@@ -413,7 +422,7 @@ class Turbine:
         for rotor in self.horseshoes:
             for horseshoe in rotor:
                 inducedVelocityByHorseshoe = horseshoe.GetInducedVelocityInducedByHorseshoe(pos)
-            totalInducedVelocity += inducedVelocityByHorseshoe
+                totalInducedVelocity += inducedVelocityByHorseshoe
 
         return totalInducedVelocity
 

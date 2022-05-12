@@ -1,7 +1,7 @@
 from Lifting_Line import *
 # Ugly but it worksss
 
-mainTurbine = Turbine(0, (10,10,10))
+mainTurbine = Turbine(0, (0,0,0))
 
 # This file contains the main iteration over two turbines.
 maxiterations = 100
@@ -21,3 +21,5 @@ while iteri < maxiterations:
         break;
 
     iteri += 1
+
+print("Done :D")

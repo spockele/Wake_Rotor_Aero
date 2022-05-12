@@ -271,7 +271,7 @@ class HorseShoe:
         self.vind_theta = self.induced_velocity.yglob * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
         self.w_flow = v_inf + self.vind_z
-        self.w_rot = omega * self.pos_centre.rloc + self.vind_theta
+        self.w_rot = omega * self.pos_centre.rloc - self.vind_theta
 
         self.w = np.sqrt(self.w_flow*self.w_flow + self.w_rot*self.w_rot)
         self.phi = np.arctan2(self.w_flow, self.w_rot)
@@ -287,9 +287,9 @@ class HorseShoe:
         # Propogate the circulation over to all the filaments in this horseshoe
         # TODO: ABSOLUTELY DOUBLE CHECK IF WE MUTLIPLY THE RIGHT ONE WITH -1
         for filament in self.leg_inner.control_points:
-            filament.set_circulation(self.circulation)
-        for filament in self.leg_outer.control_points:
             filament.set_circulation(-1*self.circulation)
+        for filament in self.leg_outer.control_points:
+            filament.set_circulation(self.circulation)
 
         return self.circulation - previousCirculation
 
@@ -378,7 +378,7 @@ class Turbine:
         # self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
 
         self.b = 3 # Number of blades
-        self.wakePointResolution = 5
+        self.wakePointResolution = 20
         self.twakemax = 1
         self.n_elements = 10 # Divide the blade up in n_elements
         self.rho = 1.225 # [Kg/m3]

@@ -27,20 +27,34 @@ def CarthToCyl(x,y,z):
 def compare_to_BEM():
     linestyles = ('dashed', 'solid', 'dotted')
     for j, tsr in enumerate((6, 8, 10)):
-        [r_BEM, alpha_BEM, phi_BEM, pn_BEM, pt_BEM] = read_from_file('./saved_data/BEM_r_alpha_phi_pn_pt_tsr_%d.txt'%(tsr))
+        [r_BEM, alpha_BEM, phi_BEM, pn_BEM, pt_BEM, a_BEM, a_prime_BEM] = read_from_file('./saved_data/BEM_r_alpha_phi_pn_pt_a_aprime_tsr_%d.txt'%(tsr))
         [[cp_BEM, cT_BEM]] = read_from_file('./saved_data/BEM_cp_cT_tsr_%d.txt'%(tsr))
+        [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_from_file('./saved_data/LL_r_alpha_phi_pn_pt_a_aprime_tsr_%d.txt' % (tsr))
+        [[cp_LL, cT_LL]] = read_from_file('./saved_data/LL_cp_cT_tsr_%d.txt' % (tsr))
 
         plt.figure(1, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
         plt.plot(r_BEM, alpha_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
+        plt.plot(r_LL, alpha_LL, linestyle=linestyles[j], color='tab:blue', label=f'Lifting line ($\\lambda={tsr}$)')
 
         plt.figure(2, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
         plt.plot(r_BEM, np.degrees(phi_BEM), linestyle=linestyles[j], color='tab:orange', label=f'BEM ($\\lambda={tsr}$)')
+        plt.plot(r_LL, np.degrees(phi_LL), linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
 
         plt.figure(3, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Normal force ($p_{n}$) [N/m]')
         plt.plot(r_BEM, pn_BEM, linestyle=linestyles[j], color='tab:blue', label='BEM ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_BEM))
+        plt.plot(r_LL, pn_LL, linestyle=linestyles[j], color='tab:blue', label='Lifting line ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_LL))
 
-        plt.figure(4, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential force ($p_{t}$) [N/m]');
+        plt.figure(4, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential force ($p_{t}$) [N/m]')
         plt.plot(r_BEM, pt_BEM, linestyle=linestyles[j], color='tab:orange', label='BEM ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_BEM))
+        plt.plot(r_LL, pt_LL, linestyle=linestyles[j], color='tab:orange', label='Lifting line ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_LL))
+
+        plt.figure(5, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Axial induction factor ($a$) [-]')
+        plt.plot(r_BEM, a_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
+        plt.plot(r_LL, a_LL, linestyle=linestyles[j], color='tab:blue', label=f'Lifting line ($\\lambda={tsr}$)')
+
+        plt.figure(6, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
+        plt.plot(r_BEM, a_prime_BEM, linestyle=linestyles[j], color='tab:orange', label=f'BEM ($\\lambda={tsr}$)')
+        plt.plot(r_LL, a_prime_LL, linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
 
     plt.figure(1, figsize=(5, 5))
     plt.grid()
@@ -64,7 +78,19 @@ def compare_to_BEM():
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('./figures/Tangencial_force.pdf')
+    plt.savefig('./figures/Tangential_force.pdf')
+
+    plt.figure(5, figsize=(5, 5))
+    plt.grid()
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('./figures/Axial_induction_factor.pdf')
+
+    plt.figure(6, figsize=(5, 5))
+    plt.grid()
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('./figures/Tangential_induction_factor.pdf')
 
     plt.show()
     return
@@ -228,6 +254,10 @@ class HorseShoe:
         self.w = None
         self.phi = None
         self.alpha = None
+        self.pt = None
+        self.pn = None
+        self.a = None # Axial induction factor
+        self.a_prime = None # Tangential induction factor
 
     def set_circulation(self, v_inf, omega):
         self.vind_z = self.induced_velocity.zglob
@@ -255,6 +285,15 @@ class HorseShoe:
             filament.set_circulation(self.circulation)
 
         return self.circulation - previousCirculation
+
+    def GetForcesAndFactors(self,rho,v_inf,omega,turbineRadius):
+        self.LiftDensity = 0.5*rho*self.w*self.w* self.chord*self.airfoil.cl(np.degrees(self.alpha))
+        self.DragDensity = 0.5*rho*self.w*self.w* self.chord*self.airfoil.cd(np.degrees(self.alpha))
+        self.pn = np.sin(self.DragDensity)+np.cos(self.LiftDensity)
+        self.pt = np.sin(self.LiftDensity) - np.cos(self.DragDensity)
+        self.a = 1-self.w_flow/v_inf
+        self.a_prime = self.w_rot/omega/turbineRadius - 1
+        return self.pt, self.pn, self.a, self.a_prime
 
     def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
         '''Gets the total induced by the horseshoe at a specific point in space.'''

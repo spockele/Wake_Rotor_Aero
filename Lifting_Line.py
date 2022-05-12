@@ -240,6 +240,12 @@ class HorseShoe:
         self.phi = np.arctan2(self.w_flow, self.w_rot)
         self.alpha = self.phi - self.twist
 
+
+        if self.circulation == None:
+            previousCirculation = 0
+        else:
+            previousCirculation = self.circulation
+        
         self.circulation = .5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))
 
         # Propogate the circulation over to all the filaments in this horseshoe
@@ -247,6 +253,8 @@ class HorseShoe:
             filament.set_circulation(self.circulation)
         for filament in self.leg_outer.control_points:
             filament.set_circulation(self.circulation)
+
+        return self.circulation - previousCirculation
 
     def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
         '''Gets the total induced by the horseshoe at a specific point in space.'''
@@ -393,9 +401,16 @@ class Turbine:
                 set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
 
     def set_circulations_horseshoes(self):
+        '''Sets the circulation for all the horseshoes based on their internally saved flow deviation vector. Returns the change in circulation (delta gamma) for the element that has it as the highest.'''
+        highestDeltaGamma = 0
         for blade in self.horseshoes:
             for set in blade:
-                set.set_circulation(self.u_inf, self.omega)
+                # Calls function that updates, and returns the change.
+                deltaGamma = set.set_circulation(self.u_inf, self.omega)
+                if deltaGamma > highestDeltaGamma:
+                    highestDeltaGamma = deltaGamma
+
+        return highestDeltaGamma
 
     def plot(self, ax=None):
         for i, horseshoes in enumerate(self.horseshoes):

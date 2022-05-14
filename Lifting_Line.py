@@ -270,6 +270,8 @@ class HorseShoe:
         self.vind_theta = self.induced_velocity.yglob * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
         self.w_flow = v_inf + self.vind_z
+        
+        # @fien: see what making this plus a minus does
         self.w_rot = omega * self.pos_centre.rloc + self.vind_theta
 
         self.w = np.sqrt(self.w_flow*self.w_flow + self.w_rot*self.w_rot)
@@ -281,6 +283,7 @@ class HorseShoe:
         else:
             previousCirculation = self.circulation
 
+        # Adding some overrelaxation
         f = .25
         self.circulation = f * (.5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))) + (1-f) * previousCirculation
 

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from Lifting_Line import Turbine, GetRelaxationFactor
+from Lifting_Line import Turbine, GetRelaxationFactor, compare_to_BEM
 
 
 def run_lifting_line():
@@ -68,3 +68,4 @@ def run_lifting_line():
 
 if __name__ == '__main__':
     run_lifting_line()
+    compare_to_BEM()

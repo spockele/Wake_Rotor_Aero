@@ -499,9 +499,9 @@ def GetRelaxationFactor(deltaCirculation):
 
         #TODO Add normalisation to dr
 
-        ky = 0.5 # K_y
-        kx = 3. # K_x
-        ly = 0.25 # L_y
+        ky = 0.25 # K_y
+        kx = 0.2 # K_x
+        ly = 0.5 # L_y
         lx = 25. #L_x
 
         if deltaCirculation is None:

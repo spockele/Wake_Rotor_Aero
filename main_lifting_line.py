@@ -23,7 +23,7 @@ def run_lifting_line():
 
 
         # print ("Finished iteration {}. max delta gamma = {:.3f}".format(iteri, highestDeltaGamma))
-        print(f"Finished iteration {iteri}. max delta gamma = {highestDeltaGamma} at idx = {highestIndex}")
+        print(f"Finished iteration {iteri}. max delta gamma = {round(highestDeltaGamma,3)} at idx = {highestIndex}, relaxation = {round(relaxationFactor, 3)}")
         # Exit criterion based on change in delta gamma
         if abs(highestDeltaGamma) < 1e-1:
             bConverged = True

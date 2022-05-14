@@ -10,7 +10,7 @@ def check_convergence():
 def run_lifting_line():
     # Ugly but it worksss
 
-    mainTurbine = Turbine(0, (0,0,0))
+    mainTurbine = Turbine(rotation=0, referencePos=(0,0,0))
 
     # This file contains the main iteration over two turbines.
     maxiterations = 100

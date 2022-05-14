@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
-from Lifting_Line import *
+import numpy as np
+from Lifting_Line import Turbine
 
 
 def run_lifting_line():

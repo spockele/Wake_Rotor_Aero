@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from Lifting_Line import Turbine, GetRelaxationFactor
+from Lifting_Line import Turbine, GetRelaxationFactor, compare_to_BEM
 
 
 def check_convergence():
@@ -27,7 +27,7 @@ def run_lifting_line():
 
 
         # print ("Finished iteration {}. max delta gamma = {:.3f}".format(iteri, highestDeltaGamma))
-        print(f"Finished iteration {iteri}. max delta gamma = {highestDeltaGamma} at idx = {highestIndex}")
+        print(f"Finished iteration {iteri}. max delta gamma = {round(highestDeltaGamma,3)} at idx = {highestIndex}, relaxation = {round(relaxationFactor, 3)}")
         # Exit criterion based on change in delta gamma
         if abs(highestDeltaGamma) < 1e-1:
             bConverged = True
@@ -72,3 +72,4 @@ def run_lifting_line():
 
 if __name__ == '__main__':
     run_lifting_line()
+    compare_to_BEM()

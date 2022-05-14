@@ -213,10 +213,8 @@ class Filament:
 
 
 class Leg:
-    def __init__(self, reset=False):
-        if not reset:
-            self.control_points = []
-
+    def __init__(self):
+        self.control_points = []
         self.circulation = None
 
     def CreateControlPoints(self, arrayOfCylindricalPositions):
@@ -227,11 +225,7 @@ class Leg:
         prevPoint = arrayOfCylindricalPositions[0]
         for cylPos in arrayOfCylindricalPositions[1:]:
             self.control_points.append(Filament(prevPoint, cylPos))
-            prevPoint = cylPos     
-
-    def reset(self):
-        [cp.reset() for cp in self.control_points]
-        self.__init__(reset=True)
+            prevPoint = cylPos
 
     def plot(self, colour, ax=None):
         for filament in self.control_points:
@@ -240,22 +234,21 @@ class Leg:
 
 class HorseShoe:
 
-    def __init__(self, airfoil, chord, pos_inner, pos_outer, twist, reset=False):
-        if not reset:
-            self.leg_outer = Leg()
-            self.leg_inner = Leg()
+    def __init__(self, airfoil, chord, pos_inner, pos_outer, twist):
+        self.leg_outer = Leg()
+        self.leg_inner = Leg()
 
-            self.airfoil = airfoil
-            self.chord = chord
-            self.twist = twist
+        self.airfoil = airfoil
+        self.chord = chord
+        self.twist = twist
 
-            self.delta_r = (pos_outer - pos_inner).Length()
-            self.pos_inner = pos_inner
-            self.pos_outer = pos_outer
-            self.pos_centre = (pos_inner + pos_outer) / 2  # vorticity needs to be calculated at the blade element center
+        self.delta_r = (pos_outer - pos_inner).Length()
+        self.pos_inner = pos_inner
+        self.pos_outer = pos_outer
+        self.pos_centre = (pos_inner + pos_outer) / 2  # vorticity needs to be calculated at the blade element center
 
-            # Filament that actually represents the lifting line
-            self.liftingLine = Filament(self.pos_inner, self.pos_outer)
+        # Filament that actually represents the lifting line
+        self.liftingLine = Filament(self.pos_inner, self.pos_outer)
 
         self.circulation = None
         self.induced_velocity = Vec((0,0,0))
@@ -332,11 +325,6 @@ class HorseShoe:
 
         return totalInducedVelocity
 
-    def reset(self):
-        self.leg_inner.reset()
-        self.leg_outer.reset()
-        self.__init__(0, 0, 0, 0, 0, reset=True)
-
     def plot(self, base_colour, ax=None):
         colour = base_colour * (self.pos_centre.rloc + 50) / (2*50)
         self.leg_inner.plot(colour, ax=ax)
@@ -388,11 +376,7 @@ class Turbine:
     """
     Turbine parameters, air density, U_inf
     """
-    def __init__(self, n_rot_wake=1, n_point_per_rotation=20, n_blade_elements=20, convection_speed=10, rotation=0, referencePos=(0.,0.,0.), reset=False):
-        # data = read_from_file('DU95W150.csv')
-        # self.alpha_lst = data[:, 0]
-        # self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
-
+    def __init__(self, n_rot_wake=1, n_point_per_rotation=20, n_blade_elements=20, convection_speed=10, rotation=0, referencePos=(0.,0.,0.)):
         self.b = 3 # Number of blades
         self.radius = 50  # Total radius
         self.blade_pitch = np.radians(-2)

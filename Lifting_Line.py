@@ -374,29 +374,30 @@ class Turbine:
     """
     Turbine parameters, air density, U_inf
     """
-    def __init__(self, rotation=0, referencePos=(0.,0.,0.), reset=False):
+    def __init__(self, n_rot_wake, n_point_per_rotation, n_blade_elements, convection_speed, rotation=0, referencePos=(0.,0.,0.), reset=False):
         # data = read_from_file('DU95W150.csv')
         # self.alpha_lst = data[:, 0]
         # self.cl_lst = data[:, 1] #; self.cd_lst = data[:, 2]; self.cm_lst = data[:, 3]
 
         self.b = 3 # Number of blades
-        self.wakePointResolution = 10
-        self.twakemax = 1*np.pi
-        self.n_elements = 50 # Divide the blade up in n_elements
-        self.rho = 1.225 # [Kg/m3]
-        self.u_inf = 10 # [m/s] U_infinity = free stream velocity
-        self.radius = 50 # Total radius
-        self.tsr = 10
-        self.omega = self.tsr * self.u_inf / self.radius
+        self.radius = 50  # Total radius
         self.blade_pitch = np.radians(-2)
-        r_start = 0.2*self.radius
-
-        airfoil = DU95W150()
-
         self.rotation = rotation
 
-        self.horseshoes = [[], [], []]
+        self.rho = 1.225 # [Kg/m3]
+        self.u_inf = 10 # [m/s] U_infinity = free stream velocity
+        self.tsr = 10
 
+        self.omega = self.tsr * self.u_inf / self.radius
+        r_start = 0.2*self.radius
+        airfoil = DU95W150()
+
+
+        self.wakePointResolution = 10
+        self.twakemax = 1 * np.pi
+        self.n_elements = 50  # Divide the blade up in n_elements
+
+        self.horseshoes = [[], [], []]
         for i in range(self.n_elements):
             r_inner = r_start + (self.radius - r_start) / self.n_elements * i
             r_outer = r_start + (self.radius - r_start) / self.n_elements * (i+1)

@@ -3,6 +3,10 @@ import numpy as np
 from Lifting_Line import Turbine
 
 
+def check_convergence():
+    pass
+
+
 def run_lifting_line():
     # Ugly but it worksss
 

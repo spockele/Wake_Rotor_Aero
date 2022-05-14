@@ -192,9 +192,12 @@ class Filament:
         r12sqr = r12x**2 + r12y**2 + r12z**2
         r01 = (x2 - x1)*(xp - x1) + (y2 - y1)*(yp - y1) + (z2 - z1)*(zp - z1)
         r02 = (x2 - x1)*(xp - x2) + (y2 - y1)*(yp - y2) + (z2 - z1)*(zp - z2)
+        if abs(r12sqr) < 1e-9:
+            return Vec((0,0,0))
         k = self.circulation/(4*np.pi*r12sqr)*(r01/r1 - r02/r2)
         inducedVel = Vec((k*r12x, k*r12y, k*r12z))
         return inducedVel
+
 
     def plot(self, colour, ax=None):
         startPosXYZ = self.startPos.output_xyz(glob=True)
@@ -251,6 +254,9 @@ class HorseShoe:
             self.pos_outer = pos_outer
             self.pos_centre = (pos_inner + pos_outer) / 2  # vorticity needs to be calculated at the blade element center
 
+            # Filament that actually represents the lifting line
+            self.liftingLine = Filament(self.pos_inner, self.pos_outer)
+
         self.circulation = None
         self.induced_velocity = Vec((0,0,0))
 
@@ -291,6 +297,8 @@ class HorseShoe:
 
         # Propogate the circulation over to all the filaments in this horseshoe
         # TODO: ABSOLUTELY DOUBLE CHECK IF WE MUTLIPLY THE RIGHT ONE WITH -1
+        self.liftingLine.set_circulation(self.circulation)
+
         for filament in self.leg_inner.control_points:
             filament.set_circulation(self.circulation)
         for filament in self.leg_outer.control_points:
@@ -310,6 +318,9 @@ class HorseShoe:
     def GetInducedVelocityInducedByHorseshoe(self, pos: Vec):
         '''Gets the total induced by the horseshoe at a specific point in space.'''
         totalInducedVelocity = Vec((0,0,0))
+
+        # Do NOT forget the contribution by the actual lifting line lmao
+        totalInducedVelocity += self.liftingLine.GetInducedFlow(pos)
 
         for filament in self.leg_inner.control_points:
             flowByFilament = filament.GetInducedFlow(pos)

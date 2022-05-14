@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from Lifting_Line import Turbine
+from Lifting_Line import Turbine, GetRelaxationFactor
 
 
 def run_lifting_line():
@@ -12,11 +12,13 @@ def run_lifting_line():
     maxiterations = 100
     iteri = 1
     bConverged = False
-    highestIndex, highestDeltaGamma = mainTurbine.set_circulations_horseshoes()
+    relaxationFactor = .5
+    highestIndex, highestDeltaGamma = mainTurbine.set_circulations_horseshoes(relaxationFactor)
     print(f"Initial calculation. max delta gamma = {highestDeltaGamma} at idx = {highestIndex}")
     while iteri < maxiterations:
+        relaxationFactor = GetRelaxationFactor(highestDeltaGamma/relaxationFactor)
         mainTurbine.SetInducedVelocityForHorseshoes()
-        highestIndex, highestDeltaGamma = mainTurbine.set_circulations_horseshoes()
+        highestIndex, highestDeltaGamma = mainTurbine.set_circulations_horseshoes(relaxationFactor)
 
 
 
@@ -31,11 +33,7 @@ def run_lifting_line():
 
     print("Done :D")
 
-if __name__ == '__main__':
-    run_lifting_line()
-
     mainTurbine.extract_information_N_write()
-    compare_to_BEM()
     
     # plt.figure(1)
     # out = mainTurbine.extract_information_N_write()
@@ -66,3 +64,7 @@ if __name__ == '__main__':
     # plt.legend()
     #
     # plt.show()
+
+
+if __name__ == '__main__':
+    run_lifting_line()

@@ -266,12 +266,12 @@ class HorseShoe:
         self.a = None # Axial induction factor
         self.a_prime = None # Tangential induction factor
 
-    def set_circulation(self, v_inf, omega):
+    def set_circulation(self, v_inf, omega, relaxationFactor):
         self.vind_z = self.induced_velocity.zglob
         self.vind_theta = self.induced_velocity.yglob * np.cos(self.pos_centre.thetaloc) - self.induced_velocity.xglob * np.sin(self.pos_centre.thetaloc)
 
         self.w_flow = v_inf + self.vind_z
-        
+
         # @fien: see what making this plus a minus does
         self.w_rot = omega * self.pos_centre.rloc + self.vind_theta
 
@@ -279,14 +279,15 @@ class HorseShoe:
         self.phi = np.arctan2(self.w_flow, self.w_rot)
         self.alpha = self.phi - self.twist
 
+        # Little hack to make sure that the first pre-iteration doesn't return all nulls
         if self.circulation == None:
             previousCirculation = 0
         else:
             previousCirculation = self.circulation
 
-        # Adding some overrelaxation
-        f = .25
-        self.circulation = f * (.5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))) + (1-f) * previousCirculation
+        # Since static iteration tends to wildly oscillate, we add a relaxation factor.
+        # We make this relaxation factor a function of the gradient of the circulation (first order newton)
+        self.circulation = relaxationFactor * (.5 * self.w * self.delta_r * self.chord * self.airfoil.cl(np.degrees(self.alpha))) + (1-relaxationFactor) * previousCirculation
 
         # Propogate the circulation over to all the filaments in this horseshoe
         # TODO: ABSOLUTELY DOUBLE CHECK IF WE MUTLIPLY THE RIGHT ONE WITH -1
@@ -296,6 +297,7 @@ class HorseShoe:
             filament.set_circulation(-1*self.circulation)
 
         return self.circulation - previousCirculation
+        
 
     def GetForcesAndFactors(self, rho, v_inf, omega):
         self.LiftDensity = 0.5*rho*self.w*self.w* self.chord*self.airfoil.cl(np.degrees(self.alpha))
@@ -442,14 +444,14 @@ class Turbine:
             for set in rotor:
                 set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
 
-    def set_circulations_horseshoes(self):
+    def set_circulations_horseshoes(self, relaxationFactor):
         '''Sets the circulation for all the horseshoes based on their internally saved flow deviation vector. Returns the change in circulation (delta gamma) for the element that has it as the highest.'''
         highestDeltaGamma = 0
         highestIndex = 0, 0
         for j, blade in enumerate(self.horseshoes):
             for i, set in enumerate(blade):
                 # Calls function that updates, and returns the change.
-                deltaGamma = set.set_circulation(self.u_inf, self.omega)
+                deltaGamma = set.set_circulation(self.u_inf, self.omega, relaxationFactor)
                 if abs(deltaGamma) > abs(highestDeltaGamma):
                     highestDeltaGamma = deltaGamma
                     highestIndex = j, i
@@ -485,6 +487,34 @@ class Turbine:
         Cp = power / (0.5 * self.rho * np.pi * self.radius ** 2 * self.u_inf ** 3)
         write_to_file([[CT, Cp]], f'saved_data/LL_cp_cT_tsr_{self.tsr}.txt')
         return out_array, CT, Cp
+
+def GetRelaxationFactor(deltaCirculation):
+        # gamma_n = f * gamma + (1-f)*gamma_{n-1}
+
+        # 1 |
+        #   |-K
+        #   |  \
+        #   |   L---
+        # 0 |_______
+
+        #TODO Add normalisation to dr
+
+        ky = 0.5 # K_y
+        kx = 3. # K_x
+        ly = 0.25 # L_y
+        lx = 25. #L_x
+
+        if deltaCirculation is None:
+            return ky
+        elif (deltaCirculation < kx):
+            f = ky
+        elif deltaCirculation > lx:
+            f = ly
+        else:
+            slope = (ky - ly)/(kx - lx)
+            offset = ky - slope * kx
+            f = slope * abs(deltaCirculation) + offset
+        return f;
 
 
 if __name__ == "__main__":

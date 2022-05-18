@@ -31,7 +31,7 @@ def compare_to_BEM():
         [r_BEM, alpha_BEM, phi_BEM, pn_BEM, pt_BEM, a_BEM, a_prime_BEM] = read_from_file('./saved_data/BEM_r_alpha_phi_pn_pt_a_aprime_tsr_%d.txt'%(tsr))
         [[cp_BEM, cT_BEM]] = read_from_file('./saved_data/BEM_cp_cT_tsr_%d.txt'%(tsr))
         [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_from_file('./saved_data/LL_r_alpha_phi_pn_pt_a_aprime_tsr_%d_rotorNumber_0.txt' % (tsr))
-        [[cp_LL, cT_LL]] = read_from_file('./saved_data/LL_cp_cT_tsr_%d.txt' % (tsr))
+        [[cT_LL, cp_LL]] = read_from_file('./saved_data/LL_cp_cT_tsr_%d.txt' % (tsr))
 
         plt.figure(1, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
         plt.plot(r_BEM, alpha_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
@@ -297,8 +297,7 @@ class HorseShoe:
         for filament in self.leg_outer.control_points:
             filament.set_circulation(-1*self.circulation)
 
-        return self.circulation - previousCirculation
-        
+        return self.circulation - previousCirculation, self.delta_r
 
     def GetForcesAndFactors(self, rho, v_inf, omega):
         self.LiftDensity = 0.5*rho*self.w*self.w* self.chord*self.airfoil.cl(np.degrees(self.alpha))
@@ -376,7 +375,7 @@ class Turbine:
     """
     Turbine parameters, air density, U_inf
     """
-    def __init__(self, n_rot_wake=1, n_point_per_rotation=20, n_blade_elements=20, convection_speed=10, rotation=0, referencePos=(0.,0.,0.)):
+    def __init__(self, n_rot_wake=8, n_point_per_rotation=12, n_blade_elements=30, convection_speed=10, rotation=0, referencePos=(0.,0.,0.)):
         self.b = 3 # Number of blades
         self.radius = 50  # Total radius
         self.blade_pitch = np.radians(-2)
@@ -429,10 +428,6 @@ class Turbine:
 
         return totalInducedVelocity
 
-    def reset(self):
-        [[hs.reset() for hs in blade] for blade in self.horseshoes]
-        self.__init__(self.rotation, reset=True)
-
     def SetInducedVelocityForHorseshoes(self):
         '''For each horseshoe, sets the induced velocity by all the other horseshoes and itself at its centrepoint.'''
         # Iterate over the horseshoes to set
@@ -444,15 +439,17 @@ class Turbine:
         '''Sets the circulation for all the horseshoes based on their internally saved flow deviation vector. Returns the change in circulation (delta gamma) for the element that has it as the highest.'''
         highestDeltaGamma = 0
         highestIndex = 0, 0
+        dr = 0
         for j, blade in enumerate(self.horseshoes):
             for i, set in enumerate(blade):
                 # Calls function that updates, and returns the change.
-                deltaGamma = set.set_circulation(self.u_inf, self.omega, relaxationFactor)
+                deltaGamma, dr = set.set_circulation(self.u_inf, self.omega, relaxationFactor)
                 if abs(deltaGamma) > abs(highestDeltaGamma):
                     highestDeltaGamma = deltaGamma
+                    dr = dr
                     highestIndex = j, i
 
-        return highestIndex, highestDeltaGamma
+        return highestIndex, highestDeltaGamma, dr
 
     def plot(self, ax=None):
         for i, horseshoes in enumerate(self.horseshoes):
@@ -461,7 +458,7 @@ class Turbine:
             for horseshoe in horseshoes:
                 horseshoe.plot(colour, ax=ax)
 
-    def extract_information_N_write(self): ## TODO: add a name prefix so as not to overwrite files.
+    def extract_information_N_write(self, write=True): ## TODO: add a name prefix so as not to overwrite files.
         out_array = np.empty((3, 7, len(self.horseshoes[0])))
         thrust = 0
         power = 0
@@ -475,16 +472,21 @@ class Turbine:
                 out_array[i, 4, j] = horseshoe.pt
                 out_array[i, 5, j] = horseshoe.a
                 out_array[i, 6, j] = horseshoe.a_prime
-            write_to_file(out_array[i,:,:], f'saved_data/LL_r_alpha_phi_pn_pt_a_aprime_tsr_{self.tsr}_rotorNumber_{i}.txt')
+            if write:
+                write_to_file(out_array[i,:,:], f'saved_data/LL_r_alpha_phi_pn_pt_a_aprime_tsr_{self.tsr}_rotorNumber_{i}.txt')
             # Thrust and Power calculation
             thrust += spig.trapz(out_array[i, 3,:], out_array[i, 0,:])
             power += self.omega * spig.trapz(out_array[i, 4,:] * out_array[i, 0,:], out_array[i, 0,:])
+
         CT = thrust / (0.5 * self.rho * np.pi * self.radius ** 2 * self.u_inf ** 2)
         Cp = power / (0.5 * self.rho * np.pi * self.radius ** 2 * self.u_inf ** 3)
-        write_to_file([[CT, Cp]], f'saved_data/LL_cp_cT_tsr_{self.tsr}.txt')
+
+        if write:
+            write_to_file([[CT, Cp]], f'saved_data/LL_cp_cT_tsr_{self.tsr}.txt')
+
         return out_array, CT, Cp
 
-def GetRelaxationFactor(deltaCirculation):
+def GetRelaxationFactor(deltaCirculation, dr):
         # gamma_n = f * gamma + (1-f)*gamma_{n-1}
 
         # 1 |
@@ -495,10 +497,10 @@ def GetRelaxationFactor(deltaCirculation):
 
         #TODO Add normalisation to dr
 
-        ky = 0.25 # K_y
-        kx = 0.2 # K_x
+        ky = 0.2 # K_y
+        kx = .11 / dr # K_x
         ly = 0.5 # L_y
-        lx = 25. #L_x
+        lx = 25 / dr # L_x
 
         if deltaCirculation is None:
             return ky

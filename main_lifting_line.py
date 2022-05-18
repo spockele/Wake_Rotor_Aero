@@ -1,46 +1,63 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from Lifting_Line import Turbine, GetRelaxationFactor, compare_to_BEM
+from read_write import read_from_file, write_to_file
 
 
 def check_convergence():
-    pass
+    n_rot_wake, n_point_per_rotation, n_blade_elements, convection_speed = 8, 12, 30, 10
+    [[cp_BEM, _]] = read_from_file(f'./saved_data/BEM_cp_cT_tsr_10.txt')
+
+    n_lst = 5 * np.arange(4, 11)
+    delta = np.empty(n_lst.shape)
+
+    for i, n in enumerate(n_lst):
+        turbineParams = (n_rot_wake, n_point_per_rotation, n, convection_speed)
+        turbine = run_lifting_line(turbineParams=turbineParams)
+        delta[i] = abs(cp_BEM - turbine.extract_information_N_write(write=False)[2])
+        print(delta[i])
+
+    plt.plot(n_lst, delta)
+    plt.xlabel('N (-)')
+    plt.ylabel('$\\Delta C_p$ (-)')
+    plt.show()
 
 
-def run_lifting_line():
+def run_lifting_line(turbineParams=None, relaxFactor=None):
     # Ugly but it worksss
+    if turbineParams is None:
+        mainTurbine = Turbine(rotation=0, referencePos=(0,0,0))
 
-    mainTurbine = Turbine(rotation=0, referencePos=(0,0,0))
+    else:
+        mainTurbine = Turbine(*turbineParams, rotation=0, referencePos=(0,0,0))
 
     # This file contains the main iteration over two turbines.
     maxiterations = 100
     iteri = 1
     bConverged = False
-    relaxationFactor = .5
-    highestIndex, highestDeltaGamma = mainTurbine.set_circulations_horseshoes(relaxationFactor)
-    print(f"Initial calculation. max delta gamma = {highestDeltaGamma} at idx = {highestIndex}")
+    relaxationFactor = .5 if relaxFactor is None else relaxFactor
+    highestIndex, highestDeltaGamma, dr = mainTurbine.set_circulations_horseshoes(relaxationFactor)
+    print(f"Initial calculation.\tMax delta gamma = {round(highestDeltaGamma, 3)}.\tRelaxation = {round(relaxationFactor, 3)}")
     while iteri < maxiterations:
-        relaxationFactor = GetRelaxationFactor(highestDeltaGamma/relaxationFactor)
+        relaxationFactor = GetRelaxationFactor(abs(highestDeltaGamma) / relaxationFactor / dr, dr) if relaxFactor is None else relaxFactor
         mainTurbine.SetInducedVelocityForHorseshoes()
-        highestIndex, highestDeltaGamma = mainTurbine.set_circulations_horseshoes(relaxationFactor)
+        highestIndex, highestDeltaGamma, dr = mainTurbine.set_circulations_horseshoes(relaxationFactor)
 
+        print(f"Finished iteration {iteri}.\tMax delta gamma = {round(highestDeltaGamma, 3)}.\tRelaxation = {round(relaxationFactor, 3)}")
 
-
-        # print ("Finished iteration {}. max delta gamma = {:.3f}".format(iteri, highestDeltaGamma))
-        print(f"Finished iteration {iteri}. max delta gamma = {round(highestDeltaGamma,3)} at idx = {highestIndex}, relaxation = {round(relaxationFactor, 3)}")
         # Exit criterion based on change in delta gamma
-        if abs(highestDeltaGamma) < 1e-1:
+        if abs(highestDeltaGamma) < relaxationFactor * 1e-1:
             bConverged = True
-            break;
+            break
 
         iteri += 1
 
     print("Done :D")
 
-    mainTurbine.extract_information_N_write()
-    
+    return mainTurbine
+    #
     # plt.figure(1)
-    # out = mainTurbine.extract_information_N_write()
+    # out, _, _ = mainTurbine.extract_information_N_write()
     # plt.plot(out[0, 0], np.degrees(out[0, 1]), label='alpha 0')
     # plt.plot(out[0, 0], np.degrees(out[0, 2]), label='phi 0')
     # plt.plot(out[1, 0], np.degrees(out[1, 1]), label='alpha 1')
@@ -71,5 +88,4 @@ def run_lifting_line():
 
 
 if __name__ == '__main__':
-    run_lifting_line()
     compare_to_BEM()

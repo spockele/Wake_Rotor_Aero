@@ -23,38 +23,48 @@ def check_convergence():
     plt.show()
 
 
-def run_lifting_line(turbineParams=None, relaxFactor=None):
+def run_lifting_line(turbineParams=None, relaxFactor=None, multirotor=False):
     # Ugly but it worksss
     distance_between_turbines = 30
+    
 
     if turbineParams is None:
         mainTurbine = Turbine(rotation=0, referencePos=(0,0,0))
-        secondaryTurbine = Turbine(rotation=0, referencePos=(0,distance_between_turbines,0))
+        if multirotor:
+            secondaryTurbine = Turbine(rotation=0, referencePos=(0,distance_between_turbines,0))
         
 
     else:
         mainTurbine = Turbine(*turbineParams, rotation=0, referencePos=(0,0,0))
-        secondaryTurbine = Turbine(*turbineParams, rotation=0, referencePos=(0,distance_between_turbines,0))
+        if multirotor:
+            secondaryTurbine = Turbine(*turbineParams, rotation=0, referencePos=(0,distance_between_turbines,0))
 
+    if multirotor:
+        turbines = [mainTurbine, secondaryTurbine]
+    else:
+        turbines = [mainTurbine]
     # This file contains the main iteration over two turbines.
     maxiterations = 100
     iteri = 1
     bConverged = False
     relaxationFactor = .5 if relaxFactor is None else relaxFactor
     highestIndex, highestDeltaGamma, dr = mainTurbine.set_circulations_horseshoes(relaxationFactor)
-    _, _, _ = secondaryTurbine.set_circulations_horseshoes(relaxationFactor)
+    if multirotor:
+        _, _, _ = secondaryTurbine.set_circulations_horseshoes(relaxationFactor)
     print(f"Initial calculation.\tMax delta gamma = {round(highestDeltaGamma, 3)}.\tRelaxation = {round(relaxationFactor, 3)}")
     while iteri < maxiterations:
         relaxationFactor = GetRelaxationFactor(abs(highestDeltaGamma) / relaxationFactor / dr, dr) if relaxFactor is None else relaxFactor
-        mainTurbine.SetInducedVelocityForHorseshoes([mainTurbine, secondaryTurbine])
-        secondaryTurbine.SetInducedVelocityForHorseshoes([mainTurbine, secondaryTurbine])
+        mainTurbine.SetInducedVelocityForHorseshoes([turbines])
+        if multirotor:
+            secondaryTurbine.SetInducedVelocityForHorseshoes([turbines])
         highestIndex, highestDeltaGamma, dr = mainTurbine.set_circulations_horseshoes(relaxationFactor)
-        highestIndex2, highestDeltaGamma2, dr2 = secondaryTurbine.set_circulations_horseshoes(relaxationFactor)
-        # ugly but it works for debugging
-        if abs(highestDeltaGamma2) > abs(highestDeltaGamma):
-            highestIndex = highestIndex2
-            highestDeltaGamma = highestDeltaGamma2
-            dr = dr2
+        if multirotor:
+            highestIndex2, highestDeltaGamma2, dr2 = secondaryTurbine.set_circulations_horseshoes(relaxationFactor)
+            # ugly but it works for debugging
+            if abs(highestDeltaGamma2) > abs(highestDeltaGamma):
+                highestIndex = highestIndex2
+                highestDeltaGamma = highestDeltaGamma2
+                dr = dr2
 
 
         print(f"Finished iteration {iteri}.\tMax delta gamma = {round(highestDeltaGamma, 3)}.\tRelaxation = {round(relaxationFactor, 3)}")

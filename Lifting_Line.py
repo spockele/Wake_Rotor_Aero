@@ -25,78 +25,6 @@ def CarthToCyl(x,y,z):
     return (r, theta, z)
 
 
-def compare_to_BEM():
-    linestyles = ('dashed', 'solid', 'dotted')
-    for j, tsr in enumerate([10]):#(6, 8, 10)):
-        [r_BEM, alpha_BEM, phi_BEM, pn_BEM, pt_BEM, a_BEM, a_prime_BEM] = read_from_file('./saved_data/BEM_r_alpha_phi_pn_pt_a_aprime_tsr_%d.txt'%(tsr))
-        [[cp_BEM, cT_BEM]] = read_from_file('./saved_data/BEM_cp_cT_tsr_%d.txt'%(tsr))
-        [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_from_file('./saved_data/LL_r_alpha_phi_pn_pt_a_aprime_tsr_%d_rotorNumber_0.txt' % (tsr))
-        [[cT_LL, cp_LL]] = read_from_file('./saved_data/LL_cp_cT_tsr_%d.txt' % (tsr))
-
-        plt.figure(1, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
-        plt.plot(r_BEM, alpha_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
-        plt.plot(r_LL, np.degrees(alpha_LL), linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
-
-        plt.figure(2, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
-        plt.plot(r_BEM, np.degrees(phi_BEM), linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
-        plt.plot(r_LL, np.degrees(phi_LL), linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
-
-        plt.figure(3, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Normal force ($p_{n}$) [N/m]')
-        plt.plot(r_BEM, pn_BEM, linestyle=linestyles[j], color='tab:blue', label='BEM ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_BEM))
-        plt.plot(r_LL, pn_LL, linestyle=linestyles[j], color='tab:orange', label='Lifting line ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_LL))
-
-        plt.figure(4, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential force ($p_{t}$) [N/m]')
-        plt.plot(r_BEM, pt_BEM, linestyle=linestyles[j], color='tab:blue', label='BEM ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_BEM))
-        plt.plot(r_LL, pt_LL, linestyle=linestyles[j], color='tab:orange', label='Lifting line ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_LL))
-
-        plt.figure(5, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Axial induction factor ($a$) [-]')
-        plt.plot(r_BEM, a_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
-        plt.plot(r_LL, a_LL, linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
-
-        plt.figure(6, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
-        plt.plot(r_BEM, a_prime_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
-        plt.plot(r_LL, a_prime_LL, linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
-
-    plt.figure(1, figsize=(5, 5))
-    plt.grid()
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig('./figures/Angle_of_attack.pdf')
-
-    plt.figure(2, figsize=(5, 5))
-    plt.grid()
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig('./figures/Inflow_angle.pdf')
-
-    plt.figure(3, figsize=(5, 5))
-    plt.grid()
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig('./figures/Normal_force.pdf')
-
-    plt.figure(4, figsize=(5, 5))
-    plt.grid()
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig('./figures/Tangential_force.pdf')
-
-    plt.figure(5, figsize=(5, 5))
-    plt.grid()
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig('./figures/Axial_induction_factor.pdf')
-
-    plt.figure(6, figsize=(5, 5))
-    plt.grid()
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig('./figures/Tangential_induction_factor.pdf')
-
-    plt.show()
-    return
-
-
 class Vec:
     '''Reference pos is always in carthesian coordinates.'''
     def __init__(self,localPos, referencePos=(0.,0.,0.), bLocalCylindrical=False):
@@ -369,8 +297,6 @@ class HorseShoe:
         self.leg_inner.CreateControlPoints(inner_leg_control_points)
 
 
-            
-
 class Turbine:
     """
     Turbine parameters, air density, U_inf
@@ -413,7 +339,7 @@ class Turbine:
                 pos_outer = Vec((r_outer, rotation + idx * np.radians(120), 0), referencePos=referencePos, bLocalCylindrical=True)
 
                 horseshoeToAdd = HorseShoe(airfoil, chord, pos_inner, pos_outer, relative_pitch)
-                horseshoeToAdd.GenerateWakePoints(self.u_inf, self.omega, self.wakePointResolution, self.twakemax)
+                horseshoeToAdd.GenerateWakePoints(self.u_wake, self.omega, self.wakePointResolution, self.twakemax)
                 
                 self.horseshoes[idx].append(horseshoeToAdd)
 
@@ -461,7 +387,7 @@ class Turbine:
             for horseshoe in horseshoes:
                 horseshoe.plot(colour, ax=ax)
 
-    def extract_information_N_write(self, write=True): ## TODO: add a name prefix so as not to overwrite files.
+    def extract_information_N_write(self, write=True, suffix=''):
         out_array = np.empty((3, 7, len(self.horseshoes[0])))
         thrust = 0
         power = 0
@@ -476,7 +402,7 @@ class Turbine:
                 out_array[i, 5, j] = horseshoe.a
                 out_array[i, 6, j] = horseshoe.a_prime
             if write:
-                write_to_file(out_array[i,:,:], f'saved_data/LL_r_alpha_phi_pn_pt_a_aprime_tsr_{self.tsr}_rotorNumber_{i}.txt')
+                write_to_file(out_array[i,:,:], f'saved_data/LL_r_alpha_phi_pn_pt_a_aprime_tsr_{self.tsr}_rotorNumber_{i}_{suffix}.txt')
             # Thrust and Power calculation
             thrust += spig.trapz(out_array[i, 3,:], out_array[i, 0,:])
             power += self.omega * spig.trapz(out_array[i, 4,:] * out_array[i, 0,:], out_array[i, 0,:])
@@ -485,37 +411,36 @@ class Turbine:
         Cp = power / (0.5 * self.rho * np.pi * self.radius ** 2 * self.u_inf ** 3)
 
         if write:
-            write_to_file([[CT, Cp]], f'saved_data/LL_cp_cT_tsr_{self.tsr}.txt')
+            write_to_file([[CT, Cp]], f'saved_data/LL_cp_cT_tsr_{self.tsr}_{suffix}.txt')
 
         return out_array, CT, Cp
 
+
 def GetRelaxationFactor(deltaCirculation, dr):
-        # gamma_n = f * gamma + (1-f)*gamma_{n-1}
+    # gamma_n = f * gamma + (1-f)*gamma_{n-1}
 
-        # 1 |
-        #   |-K
-        #   |  \
-        #   |   L---
-        # 0 |_______
+    # 1 |
+    #   |-K
+    #   |  \
+    #   |   L---
+    # 0 |_______
 
-        #TODO Add normalisation to dr
+    ky = 0.2 # K_y
+    kx = .11 / dr # K_x
+    ly = 0.5 # L_y
+    lx = 25 / dr # L_x
 
-        ky = 0.2 # K_y
-        kx = .11 / dr # K_x
-        ly = 0.5 # L_y
-        lx = 25 / dr # L_x
-
-        if deltaCirculation is None:
-            return ky
-        elif (deltaCirculation < kx):
-            f = ky
-        elif deltaCirculation > lx:
-            f = ly
-        else:
-            slope = (ky - ly)/(kx - lx)
-            offset = ky - slope * kx
-            f = slope * abs(deltaCirculation) + offset
-        return f;
+    if deltaCirculation is None:
+        return ky
+    elif deltaCirculation < kx:
+        f = ky
+    elif deltaCirculation > lx:
+        f = ly
+    else:
+        slope = (ky - ly)/(kx - lx)
+        offset = ky - slope * kx
+        f = slope * abs(deltaCirculation) + offset
+    return f
 
 
 if __name__ == "__main__":

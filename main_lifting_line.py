@@ -6,24 +6,29 @@ from Lifting_Line import Turbine, GetRelaxationFactor, compare_to_BEM
 def run_lifting_line():
     # Ugly but it worksss
 
+    distance_between_turbines = 30
+
     mainTurbine = Turbine(0, (0,0,0))
+    secondaryTurbine = Turbine(0, (0,distance_between_turbines,0))
 
     # This file contains the main iteration over two turbines.
     maxiterations = 100
     iteri = 1
     bConverged = False
     relaxationFactor = .5
-    highestIndex, highestDeltaGamma = mainTurbine.set_circulations_horseshoes(relaxationFactor)
-    print(f"Initial calculation. max delta gamma = {highestDeltaGamma} at idx = {highestIndex}")
+    _, highestDeltaGamma = mainTurbine.set_circulations_horseshoes(relaxationFactor)
+    _, highestDeltaGamma = secondaryTurbine.set_circulations_horseshoes(relaxationFactor)
+    print(f"Initial calculation. max delta gamma = {highestDeltaGamma}")
     while iteri < maxiterations:
         relaxationFactor = GetRelaxationFactor(highestDeltaGamma/relaxationFactor)
-        mainTurbine.SetInducedVelocityForHorseshoes()
-        highestIndex, highestDeltaGamma = mainTurbine.set_circulations_horseshoes(relaxationFactor)
+        mainTurbine.SetInducedVelocityForHorseshoes([mainTurbine, secondaryTurbine])
+        secondaryTurbine.SetInducedVelocityForHorseshoes([mainTurbine, secondaryTurbine])
+        highestIndexMain, highestDeltaGammaMain = mainTurbine.set_circulations_horseshoes(relaxationFactor)
+        highestIndexSecondary, highestDeltaGammaSecondary = secondaryTurbine.set_circulations_horseshoes(relaxationFactor)
 
-
-
+        highestDeltaGamma = max(abs(highestDeltaGammaMain), abs(highestDeltaGammaSecondary))
         # print ("Finished iteration {}. max delta gamma = {:.3f}".format(iteri, highestDeltaGamma))
-        print(f"Finished iteration {iteri}. max delta gamma = {round(highestDeltaGamma,3)} at idx = {highestIndex}, relaxation = {round(relaxationFactor, 3)}")
+        print(f"Finished iteration {iteri}. max delta gamma = {round(highestDeltaGamma,3)} at, relaxation = {round(relaxationFactor, 3)}")
         # Exit criterion based on change in delta gamma
         if abs(highestDeltaGamma) < 1e-1:
             bConverged = True

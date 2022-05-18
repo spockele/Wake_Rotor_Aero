@@ -396,7 +396,7 @@ class Turbine:
         self.b = 3 # Number of blades
         self.wakePointResolution = 10
         self.twakemax = 1*np.pi
-        self.n_elements = 50 # Divide the blade up in n_elements
+        self.n_elements = 20 # Divide the blade up in n_elements
         self.rho = 1.225 # [Kg/m3]
         self.u_inf = 10 # [m/s] U_infinity = free stream velocity
         self.radius = 50 # Total radius
@@ -448,12 +448,15 @@ class Turbine:
         [[hs.reset() for hs in blade] for blade in self.horseshoes]
         self.__init__(self.rotation, reset=True)
 
-    def SetInducedVelocityForHorseshoes(self):
+    def SetInducedVelocityForHorseshoes(self, turbines=None):
         '''For each horseshoe, sets the induced velocity by all the other horseshoes and itself at its centrepoint.'''
         # Iterate over the horseshoes to set
-        for rotor in self.horseshoes:
-            for set in rotor:
-                set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
+        if turbines is None:
+            turbines = [self]
+        for turbine in turbines:
+            for rotor in self.horseshoes:
+                for set in rotor:
+                    set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
 
     def set_circulations_horseshoes(self, relaxationFactor):
         '''Sets the circulation for all the horseshoes based on their internally saved flow deviation vector. Returns the change in circulation (delta gamma) for the element that has it as the highest.'''

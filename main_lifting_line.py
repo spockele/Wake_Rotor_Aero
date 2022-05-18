@@ -25,11 +25,16 @@ def check_convergence():
 
 def run_lifting_line(turbineParams=None, relaxFactor=None):
     # Ugly but it worksss
+    distance_between_turbines = 30
+
     if turbineParams is None:
         mainTurbine = Turbine(rotation=0, referencePos=(0,0,0))
+        secondaryTurbine = Turbine(rotation=0, referencePos=(0,distance_between_turbines,0))
+        
 
     else:
         mainTurbine = Turbine(*turbineParams, rotation=0, referencePos=(0,0,0))
+        secondaryTurbine = Turbine(*turbineParams, rotation=0, referencePos=(0,distance_between_turbines,0))
 
     # This file contains the main iteration over two turbines.
     maxiterations = 100
@@ -37,11 +42,20 @@ def run_lifting_line(turbineParams=None, relaxFactor=None):
     bConverged = False
     relaxationFactor = .5 if relaxFactor is None else relaxFactor
     highestIndex, highestDeltaGamma, dr = mainTurbine.set_circulations_horseshoes(relaxationFactor)
+    _, _, _ = secondaryTurbine.set_circulations_horseshoes(relaxationFactor)
     print(f"Initial calculation.\tMax delta gamma = {round(highestDeltaGamma, 3)}.\tRelaxation = {round(relaxationFactor, 3)}")
     while iteri < maxiterations:
         relaxationFactor = GetRelaxationFactor(abs(highestDeltaGamma) / relaxationFactor / dr, dr) if relaxFactor is None else relaxFactor
-        mainTurbine.SetInducedVelocityForHorseshoes()
+        mainTurbine.SetInducedVelocityForHorseshoes([mainTurbine, secondaryTurbine])
+        secondaryTurbine.SetInducedVelocityForHorseshoes([mainTurbine, secondaryTurbine])
         highestIndex, highestDeltaGamma, dr = mainTurbine.set_circulations_horseshoes(relaxationFactor)
+        highestIndex2, highestDeltaGamma2, dr2 = secondaryTurbine.set_circulations_horseshoes(relaxationFactor)
+        # ugly but it works for debugging
+        if abs(highestDeltaGamma2) > abs(highestDeltaGamma):
+            highestIndex = highestIndex2
+            highestDeltaGamma = highestDeltaGamma2
+            dr = dr2
+
 
         print(f"Finished iteration {iteri}.\tMax delta gamma = {round(highestDeltaGamma, 3)}.\tRelaxation = {round(relaxationFactor, 3)}")
 
@@ -88,4 +102,5 @@ def run_lifting_line(turbineParams=None, relaxFactor=None):
 
 
 if __name__ == '__main__':
-    compare_to_BEM()
+    run_lifting_line()
+    #compare_to_BEM()

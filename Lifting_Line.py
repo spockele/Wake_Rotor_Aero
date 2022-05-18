@@ -428,12 +428,15 @@ class Turbine:
 
         return totalInducedVelocity
 
-    def SetInducedVelocityForHorseshoes(self):
+    def SetInducedVelocityForHorseshoes(self, turbines=None):
         '''For each horseshoe, sets the induced velocity by all the other horseshoes and itself at its centrepoint.'''
         # Iterate over the horseshoes to set
-        for rotor in self.horseshoes:
-            for set in rotor:
-                set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
+        if turbines is None:
+            turbines = [self]
+        for turbine in turbines:
+            for rotor in self.horseshoes:
+                for set in rotor:
+                    set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
 
     def set_circulations_horseshoes(self, relaxationFactor):
         '''Sets the circulation for all the horseshoes based on their internally saved flow deviation vector. Returns the change in circulation (delta gamma) for the element that has it as the highest.'''

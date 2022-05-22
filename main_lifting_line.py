@@ -37,106 +37,118 @@ def check_convergence(check_input: int):
 
 def compare_to_BEM():
     linestyles = ('dashed', 'solid', 'dotted')
-    for j, tsr in enumerate([10]):#(6, 8, 10)):
+    for j, tsr in enumerate((6, 8, 10)):
         [r_BEM, alpha_BEM, phi_BEM, pn_BEM, pt_BEM, a_BEM, a_prime_BEM] = read_from_file(f'./saved_data/BEM_output_{tsr}.txt')
         [[cp_BEM, cT_BEM]] = read_from_file(f'./saved_data/BEM_cp_cT_{tsr}.txt')
-        [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_from_file(f'./saved_data/LL_output_{tsr}.txt')
+        [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_from_file(f'./saved_data/LL_output_{tsr}_blade0.txt')
         [[cT_LL, cp_LL]] = read_from_file(f'./saved_data/LL_cT_cp_{tsr}.txt')
 
-        plt.figure(1, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
+        plt.figure(1, figsize=(5, 5))
         plt.plot(r_BEM, alpha_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
         plt.plot(r_LL, np.degrees(alpha_LL), linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
 
-        plt.figure(2, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
+        plt.figure(2, figsize=(5, 5))
         plt.plot(r_BEM, np.degrees(phi_BEM), linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
         plt.plot(r_LL, np.degrees(phi_LL), linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
 
-        plt.figure(3, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Normal force ($p_{n}$) [N/m]')
+        plt.figure(3, figsize=(5, 5))
         plt.plot(r_BEM, pn_BEM, linestyle=linestyles[j], color='tab:blue', label='BEM ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_BEM))
         plt.plot(r_LL, pn_LL, linestyle=linestyles[j], color='tab:orange', label='Lifting line ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_LL))
 
-        plt.figure(4, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential force ($p_{t}$) [N/m]')
+        plt.figure(4, figsize=(5, 5))
         plt.plot(r_BEM, pt_BEM, linestyle=linestyles[j], color='tab:blue', label='BEM ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_BEM))
         plt.plot(r_LL, pt_LL, linestyle=linestyles[j], color='tab:orange', label='Lifting line ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_LL))
 
-        plt.figure(5, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Axial induction factor ($a$) [-]')
+        plt.figure(5, figsize=(5, 5))
         plt.plot(r_BEM, a_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
         plt.plot(r_LL, a_LL, linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
 
-        plt.figure(6, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
+        plt.figure(6, figsize=(5, 5))
         plt.plot(r_BEM, a_prime_BEM, linestyle=linestyles[j], color='tab:blue', label=f'BEM ($\\lambda={tsr}$)')
         plt.plot(r_LL, a_prime_LL, linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
 
     plt.figure(1, figsize=(5, 5))
+    plt.xlabel('$r$ [m]')
+    plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('./figures/Compare_to_BEM/Angle_of_attack.pdf')
+    plt.savefig(f'./figures/Compare_to_BEM/Angle_of_attack.pdf')
 
     plt.figure(2, figsize=(5, 5))
+    plt.xlabel('$r$ [m]')
+    plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('./figures/Compare_to_BEM/Inflow_angle.pdf')
+    plt.savefig(f'./figures/Compare_to_BEM/Inflow_angle.pdf')
 
     plt.figure(3, figsize=(5, 5))
+    plt.xlabel('$r$ [m]')
+    plt.ylabel('Normal force ($p_{n}$) [N/m]')
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('./figures/Compare_to_BEM/Normal_force.pdf')
+    plt.savefig(f'./figures/Compare_to_BEM/Normal_force.pdf')
 
     plt.figure(4, figsize=(5, 5))
+    plt.xlabel('$r$ [m]')
+    plt.ylabel('Tangential force ($p_{t}$) [N/m]')
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('./figures/Compare_to_BEM/Tangential_force.pdf')
+    plt.savefig(f'./figures/Compare_to_BEM/Tangential_force.pdf')
 
     plt.figure(5, figsize=(5, 5))
+    plt.xlabel('$r$ [m]')
+    plt.ylabel('Axial induction factor ($a$) [-]')
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('./figures/Compare_to_BEM/Axial_induction_factor.pdf')
+    plt.savefig(f'./figures/Compare_to_BEM/Axial_induction_factor.pdf')
 
     plt.figure(6, figsize=(5, 5))
+    plt.xlabel('$r$ [m]')
+    plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
     plt.grid()
     plt.legend()
     plt.tight_layout()
-    plt.savefig('./figures/Compare_to_BEM/Tangential_induction_factor.pdf')
+    plt.savefig(f'./figures/Compare_to_BEM/Tangential_induction_factor.pdf')
 
     plt.show()
 
 
 def compare_w_wo_induction():
-    linestyles = ('dashed', 'solid', 'dotted')
-    for j, tsr in enumerate([10]):#(6, 8, 10)):
-        [r_LL_a, alpha_LL_a, phi_LL_a, pn_LL_a, pt_LL_a, a_LL_a, a_prime_LL_a] = read_from_file(f'./saved_data/LL_output_{tsr}_blade0_induction.txt')
-        [[cT_LL_a, cp_LL_a]] = read_from_file(f'./saved_data/LL_cp_cT_{tsr}_induction.txt')
-        [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_from_file(f'./saved_data/LL_{tsr}_blade0.txt')
-        [[cT_LL, cp_LL]] = read_from_file(f'./saved_data/LL_cT_cp_{tsr}.txt')
+    tsr = 10
 
-        plt.figure(1, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
-        plt.plot(r_LL_a, np.degrees(alpha_LL_a), linestyle=linestyles[j+1], color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
-        plt.plot(r_LL, np.degrees(alpha_LL), linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
+    [r_LL_a, alpha_LL_a, phi_LL_a, pn_LL_a, pt_LL_a, a_LL_a, a_prime_LL_a] = read_from_file(f'./saved_data/LL_output_{tsr}_blade0_induction.txt')
+    [[cT_LL_a, cp_LL_a]] = read_from_file(f'./saved_data/LL_cT_cp_{tsr}_induction.txt')
+    [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_from_file(f'./saved_data/LL_output_{tsr}_blade0.txt')
+    [[cT_LL, cp_LL]] = read_from_file(f'./saved_data/LL_cT_cp_{tsr}.txt')
 
-        plt.figure(2, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
-        plt.plot(r_LL_a, np.degrees(phi_LL_a), linestyle=linestyles[j+1], color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
-        plt.plot(r_LL, np.degrees(phi_LL), linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
+    plt.figure(1, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
+    plt.plot(r_LL_a, np.degrees(alpha_LL_a), color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
+    plt.plot(r_LL, np.degrees(alpha_LL), color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
 
-        plt.figure(3, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Normal force ($p_{n}$) [N/m]')
-        plt.plot(r_LL_a, pn_LL_a, linestyle=linestyles[j+1], color='tab:blue', label='Lifting Line ($a_w$ = 0.16) ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_LL_a))
-        plt.plot(r_LL, pn_LL, linestyle=linestyles[j], color='tab:orange', label='Lifting line ($a_w$ = 0) ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_LL))
+    plt.figure(2, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
+    plt.plot(r_LL_a, np.degrees(phi_LL_a), color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
+    plt.plot(r_LL, np.degrees(phi_LL), color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
 
-        plt.figure(4, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential force ($p_{t}$) [N/m]')
-        plt.plot(r_LL_a, pt_LL_a, linestyle=linestyles[j+1], color='tab:blue', label='Lifting Line ($a_w$ = 0.16) ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_LL_a))
-        plt.plot(r_LL, pt_LL, linestyle=linestyles[j], color='tab:orange', label='Lifting line ($a_w$ = 0) ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_LL))
+    plt.figure(3, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Normal force ($p_{n}$) [N/m]')
+    plt.plot(r_LL_a, pn_LL_a, color='tab:blue', label='Lifting Line ($a_w$ = 0.16) ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_LL_a))
+    plt.plot(r_LL, pn_LL, color='tab:orange', label='Lifting line ($a_w$ = 0) ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_LL))
 
-        plt.figure(5, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Axial induction factor ($a$) [-]')
-        plt.plot(r_LL_a, a_LL_a, linestyle=linestyles[j+1], color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
-        plt.plot(r_LL, a_LL, linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
+    plt.figure(4, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential force ($p_{t}$) [N/m]')
+    plt.plot(r_LL_a, pt_LL_a, color='tab:blue', label='Lifting Line ($a_w$ = 0.16) ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_LL_a))
+    plt.plot(r_LL, pt_LL, color='tab:orange', label='Lifting line ($a_w$ = 0) ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_LL))
 
-        plt.figure(6, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
-        plt.plot(r_LL_a, a_prime_LL_a, linestyle=linestyles[j+1], color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
-        plt.plot(r_LL, a_prime_LL, linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
+    plt.figure(5, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Axial induction factor ($a$) [-]')
+    plt.plot(r_LL_a, a_LL_a, color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
+    plt.plot(r_LL, a_LL, color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
+
+    plt.figure(6, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
+    plt.plot(r_LL_a, a_prime_LL_a, color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
+    plt.plot(r_LL, a_prime_LL, color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
 
     plt.figure(1, figsize=(5, 5))
     plt.grid()
@@ -271,7 +283,7 @@ def run_lifting_line(turbineParams=None, relaxFactor=None, tsr=None, multirotor=
 
 
 if __name__ == '__main__':
-    # # Sensitivity Analyses
+    # Sensitivity Analyses
     print("--- Running Sensitivity Analysis ---")
     check_convergence(0)
     check_convergence(1)
@@ -290,12 +302,12 @@ if __name__ == '__main__':
     turbine.extract_information_N_write(suffix='_induction')
     compare_w_wo_induction()
 
-    # # Multirotor Stuff
-    # # Different phases between the 2 rotors
-    # print("--- Running multiple rotors at different phase angles ---")
-    # multirotor_phased()
-    # compare_phases()
-    # # Different distances between the 2 rotors
-    # print("--- Running multiple rotors at different rotor spacings ---")
-    # multirotor_spaced()
-    # compare_distances()
+    # Multirotor Stuff
+    # Different phases between the 2 rotors
+    print("--- Running multiple rotors at different phase angles ---")
+    multirotor_phased()
+    compare_phases()
+    # Different distances between the 2 rotors
+    print("--- Running multiple rotors at different rotor spacings ---")
+    multirotor_spaced()
+    compare_distances()

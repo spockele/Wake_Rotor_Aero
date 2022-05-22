@@ -137,7 +137,7 @@ class Filament:
 
         else:
             # ax.scatter(*startPosXYZ, marker='.', color=colour)
-            ax.plot(x, y, z, color=colour)
+            ax.plot(z, x, y, color=colour)
 
 
 class Leg:
@@ -301,7 +301,7 @@ class Turbine:
     """
     Turbine parameters, air density, U_inf
     """
-    def __init__(self, n_rot_wake=8, n_point_per_rotation=12, n_blade_elements=30, convection_speed=10, rotation=0, referencePos=(0.,0.,0.)):
+    def __init__(self, n_rot_wake=8, n_point_per_rotation=12, n_blade_elements=30, convection_speed=10, tsr=10, rotation=0, referencePos=(0.,0.,0.)):
         self.b = 3 # Number of blades
         self.radius = 50  # Total radius
         self.blade_pitch = np.radians(-2)
@@ -309,7 +309,7 @@ class Turbine:
 
         self.rho = 1.225 # [Kg/m3]
         self.u_inf = 10 # [m/s] U_infinity = free stream velocity
-        self.tsr = 10
+        self.tsr = tsr
 
         self.omega = self.tsr * self.u_inf / self.radius
         r_start = 0.2*self.radius
@@ -359,10 +359,14 @@ class Turbine:
         # Iterate over the horseshoes to set
         if turbines is None:
             turbines = [self]
-        for turbine in turbines:
-            for rotor in self.horseshoes:
-                for set in rotor:
-                    set.induced_velocity = self.GetInducedVelocityByTurbine(set.pos_centre)
+
+        for blade in self.horseshoes:
+            for horseshoe in blade:
+                new_induced_velocity = Vec((0, 0, 0))
+                for turbine in turbines:
+                    new_induced_velocity += turbine.GetInducedVelocityByTurbine(horseshoe.pos_centre)
+
+                horseshoe.induced_velocity = new_induced_velocity
 
     def set_circulations_horseshoes(self, relaxationFactor):
         '''Sets the circulation for all the horseshoes based on their internally saved flow deviation vector. Returns the change in circulation (delta gamma) for the element that has it as the highest.'''
@@ -402,7 +406,7 @@ class Turbine:
                 out_array[i, 5, j] = horseshoe.a
                 out_array[i, 6, j] = horseshoe.a_prime
             if write:
-                write_to_file(out_array[i,:,:], f'saved_data/LL_r_alpha_phi_pn_pt_a_aprime_tsr_{self.tsr}_rotorNumber_{i}_{suffix}.txt')
+                write_to_file(out_array[i,:,:], f'saved_data/LL_output_{self.tsr}_blade{i}{suffix}.txt')
             # Thrust and Power calculation
             thrust += spig.trapz(out_array[i, 3,:], out_array[i, 0,:])
             power += self.omega * spig.trapz(out_array[i, 4,:] * out_array[i, 0,:], out_array[i, 0,:])
@@ -411,7 +415,7 @@ class Turbine:
         Cp = power / (0.5 * self.rho * np.pi * self.radius ** 2 * self.u_inf ** 3)
 
         if write:
-            write_to_file([[CT, Cp]], f'saved_data/LL_cp_cT_tsr_{self.tsr}_{suffix}.txt')
+            write_to_file([[CT, Cp]], f'saved_data/LL_cT_cp_{self.tsr}{suffix}.txt')
 
         return out_array, CT, Cp
 

@@ -318,8 +318,8 @@ class Turbine:
                 a_prime[i] = be.a_prime
                 twist[i] = be.beta
             Big_array = [self.blade.r_list, alpha, phi, pn, pt, a, a_prime]
-            write_to_file(Big_array, './saved_data/BEM_r_alpha_phi_pn_pt_a_aprime_tsr_%d.txt'%(tsr))
-            write_to_file([[cp,cT]], './saved_data/BEM_cp_cT_tsr_%d.txt'%(tsr))
+            write_to_file(Big_array, f'./saved_data/BEM_output{tsr}.txt')
+            write_to_file([[cp, cT]], f'./saved_data/BEM_cp_cT_{tsr}.txt')
 
             plt.figure(1, figsize=(5, 5))
             plt.plot(self.blade.r_list, alpha, linestyle=linestyles[j], color='tab:blue', label=f'Angle of Attack ($\\alpha$) ($\\lambda={tsr}$)')

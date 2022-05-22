@@ -195,8 +195,8 @@ def multirotor_spaced():
     phase = 0
     for distance in distances:
         turbs = run_lifting_line(multirotor=True, phase=phase, distance=distance)
-        out0, ct0, cp0 = turbs[0].extract_information_N_write(suffix=f'_turb0_phase{phase}')
-        out1, ct1, cp1 = turbs[1].extract_information_N_write(suffix=f'_turb1_phase{phase}')
+        out0, ct0, cp0 = turbs[0].extract_information_N_write(suffix=f'_turb0_dist{distance}')
+        out1, ct1, cp1 = turbs[1].extract_information_N_write(suffix=f'_turb1_dist{distance}')
 
 
 def compare_distances():

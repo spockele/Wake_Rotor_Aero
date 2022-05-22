@@ -383,7 +383,7 @@ class Turbine:
 
         self.rho = 1.225 # [Kg/m3]
         self.u_inf = 10 # [m/s] U_infinity = free stream velocity
-        self.tsr = 10
+        self.tsr = 8
 
         self.omega = self.tsr * self.u_inf / self.radius
         r_start = 0.2*self.radius

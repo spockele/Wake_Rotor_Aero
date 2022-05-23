@@ -190,8 +190,8 @@ def compare_w_wo_induction():
 
 
 def multirotor_phased():
-    phases = 30 * np.arange(0, 4)
-    distance = 2 * 100
+    phases = 30 * np.arange(1, 4)
+    distance = 1 * 100
     for phase in phases:
         turbs = run_lifting_line(multirotor=True, phase=phase, distance=distance)
         out0, ct0, cp0 = turbs[0].extract_information_N_write(suffix=f'_turb0_phase{phase}')
@@ -199,7 +199,100 @@ def multirotor_phased():
 
 
 def compare_phases():
-    return
+    phases = 30 * np.arange(1, 4)
+    linestyles = ('dashed', 'solid', 'dotted')
+    for phase in phases:
+        for j in range(3):
+            [r_turb0, alpha_turb0, phi_turb0, pn_turb0, pt_turb0, a_turb0, a_prime_turb0] = read_from_file(f'./saved_data/LL_output_10_blade{j}_turb0_phase{phase}.txt')
+            [[cT_turb0, cp_turb0]] = read_from_file(f'./saved_data/LL_cT_cp_10_turb0_phase{phase}.txt')
+            [r_turb1, alpha_turb1, phi_turb1, pn_turb1, pt_turb1, a_turb1, a_prime_turb1] = read_from_file(f'./saved_data/LL_output_10_blade{j}_turb1_phase{phase}.txt')
+            [[cT_turb1, cp_turb1]] = read_from_file(f'./saved_data/LL_cT_cp_10_turb1_phase{phase}.txt')
+
+            plt.figure(1, figsize=(5, 5))
+            plt.plot(r_turb0, np.degrees(alpha_turb0), linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, np.degrees(alpha_turb1), linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(2, figsize=(5, 5))
+            plt.plot(r_turb0, np.degrees(phi_turb0), linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, np.degrees(phi_turb1), linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(3, figsize=(5, 5))
+            plt.plot(r_turb0, pn_turb0, linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, pn_turb1, linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(4, figsize=(5, 5))
+            plt.plot(r_turb0, pt_turb0, linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, pt_turb1, linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(5, figsize=(5, 5))
+            plt.plot(r_turb0, a_turb0, linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, a_turb1, linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(6, figsize=(5, 5))
+            plt.plot(r_turb0, a_prime_turb0, linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, a_prime_turb1, linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+        plt.figure(1, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_phases/Angle_of_attack_phase{phase}.pdf')
+
+        plt.figure(2, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_phases/Inflow_angle_phase{phase}.pdf')
+
+        plt.figure(3, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Normal force ($p_{n}$) [N/m]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_phases/Normal_force_phase{phase}.pdf')
+
+        plt.figure(4, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Tangential force ($p_{t}$) [N/m]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_phases/Tangential_force_phase{phase}.pdf')
+
+        plt.figure(5, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Axial induction factor ($a$) [-]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_phases/Axial_induction_factor_phase{phase}.pdf')
+
+        plt.figure(6, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_phases/Tangential_induction_factor_phase{phase}.pdf')
+
+        plt.show()
 
 
 def multirotor_spaced():
@@ -212,7 +305,102 @@ def multirotor_spaced():
 
 
 def compare_distances():
-    return
+    distances = 100 * np.array([1, 2, 5, 1000])
+    linestyles = ('dashed', 'solid', 'dotted')
+    for dist in distances:
+        for j in range(3):
+            [r_turb0, alpha_turb0, phi_turb0, pn_turb0, pt_turb0, a_turb0, a_prime_turb0] = read_from_file(
+                f'./saved_data/LL_output_10_blade{j}_turb0_dist{dist}.txt')
+            [[cT_turb0, cp_turb0]] = read_from_file(f'./saved_data/LL_cT_cp_10_turb0_dist{dist}.txt')
+            [r_turb1, alpha_turb1, phi_turb1, pn_turb1, pt_turb1, a_turb1, a_prime_turb1] = read_from_file(
+                f'./saved_data/LL_output_10_blade{j}_turb1_dist{dist}.txt')
+            [[cT_turb1, cp_turb1]] = read_from_file(f'./saved_data/LL_cT_cp_10_turb1_dist{dist}.txt')
+
+            plt.figure(1, figsize=(5, 5))
+            plt.plot(r_turb0, np.degrees(alpha_turb0), linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, np.degrees(alpha_turb1), linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(2, figsize=(5, 5))
+            plt.plot(r_turb0, np.degrees(phi_turb0), linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, np.degrees(phi_turb1), linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(3, figsize=(5, 5))
+            plt.plot(r_turb0, pn_turb0, linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, pn_turb1, linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(4, figsize=(5, 5))
+            plt.plot(r_turb0, pt_turb0, linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, pt_turb1, linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(5, figsize=(5, 5))
+            plt.plot(r_turb0, a_turb0, linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, a_turb1, linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+            plt.figure(6, figsize=(5, 5))
+            plt.plot(r_turb0, a_prime_turb0, linestyle=linestyles[j], color='tab:blue',
+                     label=f'Turbine 0, blade {j}')
+            plt.plot(r_turb1, a_prime_turb1, linestyle=linestyles[j], color='tab:orange',
+                     label=f'Turbine 1, blade {j}')
+
+        plt.figure(1, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_distances/Angle_of_attack_dist{dist}.pdf')
+
+        plt.figure(2, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_distances/Inflow_angle_dist{dist}.pdf')
+
+        plt.figure(3, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Normal force ($p_{n}$) [N/m]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_distances/Normal_force_dist{dist}.pdf')
+
+        plt.figure(4, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Tangential force ($p_{t}$) [N/m]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_distances/Tangential_force_dist{dist}.pdf')
+
+        plt.figure(5, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Axial induction factor ($a$) [-]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_distances/Axial_induction_factor_dist{dist}.pdf')
+
+        plt.figure(6, figsize=(5, 5))
+        plt.xlabel('$r$ [m]')
+        plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./figures/Compare_distances/Tangential_induction_factor_dist{dist}.pdf')
+
+        plt.show()
 
 
 def run_lifting_line(turbineParams=None, relaxFactor=None, tsr=None, multirotor=False, phase=None, distance=None):
@@ -283,31 +471,31 @@ def run_lifting_line(turbineParams=None, relaxFactor=None, tsr=None, multirotor=
 
 
 if __name__ == '__main__':
-    # Sensitivity Analyses
-    print("--- Running Sensitivity Analysis ---")
-    check_convergence(0)
-    check_convergence(1)
-    check_convergence(2)
-
-    # Run with default setting for comparison to the BEM results
-    print("--- Running with default settings ---")
-    for lamda in (6, 8, 10):
-        turbine = run_lifting_line(tsr=lamda)
-        turbine.extract_information_N_write()
-    compare_to_BEM()
-
-    # Run with some induction in the wake
-    print("--- Running with induction in the wake ---")
-    turbine = run_lifting_line((8, 12, 30, 10 * (1-.1585)))
-    turbine.extract_information_N_write(suffix='_induction')
-    compare_w_wo_induction()
-
+    # # Sensitivity Analyses
+    # print("--- Running Sensitivity Analysis ---")
+    # check_convergence(0)
+    # check_convergence(1)
+    # check_convergence(2)
+    #
+    # # Run with default setting for comparison to the BEM results
+    # print("--- Running with default settings ---")
+    # for lamda in (6, 8, 10):
+    #     turbine = run_lifting_line(tsr=lamda)
+    #     turbine.extract_information_N_write()
+    # compare_to_BEM()
+    #
+    # # Run with some induction in the wake
+    # print("--- Running with induction in the wake ---")
+    # turbine = run_lifting_line((8, 12, 30, 10 * (1-.1585)))
+    # turbine.extract_information_N_write(suffix='_induction')
+    # compare_w_wo_induction()
+    #
     # Multirotor Stuff
     # Different phases between the 2 rotors
     print("--- Running multiple rotors at different phase angles ---")
     multirotor_phased()
     compare_phases()
-    # Different distances between the 2 rotors
-    print("--- Running multiple rotors at different rotor spacings ---")
-    multirotor_spaced()
-    compare_distances()
+    # # Different distances between the 2 rotors
+    # print("--- Running multiple rotors at different rotor spacings ---")
+    # multirotor_spaced()
+    # compare_distances()

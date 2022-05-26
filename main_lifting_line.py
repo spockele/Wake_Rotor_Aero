@@ -193,7 +193,7 @@ def multirotor_phased():
     phases = 30 * np.arange(1, 4)
     distance = 1 * 100
     for phase in phases:
-        turbs = run_lifting_line(multirotor=True, phase=phase, distance=distance)
+        turbs = run_lifting_line(multirotor=True, phase=np.radians(phase), distance=distance)
         out0, ct0, cp0 = turbs[0].extract_information_N_write(suffix=f'_turb0_phase{phase}')
         out1, ct1, cp1 = turbs[1].extract_information_N_write(suffix=f'_turb1_phase{phase}')
 
@@ -495,7 +495,7 @@ if __name__ == '__main__':
     print("--- Running multiple rotors at different phase angles ---")
     multirotor_phased()
     compare_phases()
-    # # Different distances between the 2 rotors
+    # Different distances between the 2 rotors
     print("--- Running multiple rotors at different rotor spacings ---")
     multirotor_spaced()
     compare_distances()

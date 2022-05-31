@@ -206,7 +206,7 @@ def compare_w_wo_induction():
 
 
 def multirotor_phased():
-    phases = 30 * np.arange(1, 4)
+    phases = 30 * np.arange(0, 4)
     distance = 1 * 100
     for phase in phases:
         turbs = run_lifting_line(multirotor=True, phase=np.radians(phase), distance=distance)
@@ -215,7 +215,7 @@ def multirotor_phased():
 
 
 def compare_phases():
-    phases = 30 * np.arange(1, 4)
+    phases = 30 * np.arange(0, 4)
     linestyles = ('dashed', 'solid', 'dotted')
     for phase in phases:
         for j in range(3):
@@ -313,9 +313,9 @@ def compare_phases():
 
 def multirotor_spaced():
     distances = 100 * np.array([1, 2, 5, 1000])
-    phase = 0
+    phase = 60
     for distance in distances:
-        turbs = run_lifting_line(multirotor=True, phase=phase, distance=distance)
+        turbs = run_lifting_line(multirotor=True, phase=np.radians(phase), distance=distance)
         out0, ct0, cp0 = turbs[0].extract_information_N_write(suffix=f'_turb0_dist{distance}')
         out1, ct1, cp1 = turbs[1].extract_information_N_write(suffix=f'_turb1_dist{distance}')
 

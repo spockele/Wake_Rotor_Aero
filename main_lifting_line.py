@@ -488,35 +488,29 @@ def run_lifting_line(turbineParams=None, relaxFactor=None, tsr=None, multirotor=
 
 if __name__ == '__main__':
     # Sensitivity Analyses
-    # print("--- Running Sensitivity Analysis ---")
-    # check_convergence(0)
-    # check_convergence(1)
-    # check_convergence(2)
+    print("--- Running Sensitivity Analysis ---")
+    check_convergence(0)
+    check_convergence(1)
+    check_convergence(2)
 
     # Run with default setting for comparison to the BEM results
     print("--- Running with default settings ---")
-    # for lamda in (6, 8, 10):
-    #     turbine = run_lifting_line(tsr=lamda)
-    #     turbine.extract_information_N_write()
+    for lamda in (6, 8, 10):
+        turbine = run_lifting_line(tsr=lamda)
+        turbine.extract_information_N_write()
 
-    #Yann's modifications
-    lamda = 6
-    turbine = run_lifting_line(tsr=lamda)
-    turbine.extract_information_N_write()
-    compare_to_BEM()
+    # Run with some induction in the wake
+    print("--- Running with induction in the wake ---")
+    turbine = run_lifting_line((8, 12, 30, 10 * (1-.1585)))
+    turbine.extract_information_N_write(suffix='_induction')
+    compare_w_wo_induction()
 
-    # # Run with some induction in the wake
-    # print("--- Running with induction in the wake ---")
-    # turbine = run_lifting_line((8, 12, 30, 10 * (1-.1585)))
-    # turbine.extract_information_N_write(suffix='_induction')
-    # compare_w_wo_induction()
-    #
-    # # Multirotor Stuff
-    # # Different phases between the 2 rotors
-    # print("--- Running multiple rotors at different phase angles ---")
-    # multirotor_phased()
-    # compare_phases()
-    # # Different distances between the 2 rotors
-    # print("--- Running multiple rotors at different rotor spacings ---")
-    # multirotor_spaced()
-    # compare_distances()
+    # Multirotor Stuff
+    # Different phases between the 2 rotors
+    print("--- Running multiple rotors at different phase angles ---")
+    multirotor_phased()
+    compare_phases()
+    # Different distances between the 2 rotors
+    print("--- Running multiple rotors at different rotor spacings ---")
+    multirotor_spaced()
+    compare_distances()

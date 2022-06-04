@@ -301,7 +301,7 @@ class Turbine:
     """
     Turbine parameters, air density, U_inf
     """
-    def __init__(self, n_rot_wake=11, n_point_per_rotation=9, n_blade_elements=30, convection_speed=10, tsr=10, rotation=0, referencePos=(0.,0.,0.)):
+    def __init__(self, n_rot_wake=8, n_point_per_rotation=12, n_blade_elements=30, convection_speed=10, tsr=10, rotation=0, referencePos=(0.,0.,0.)):
         self.b = 3 # Number of blades
         self.radius = 50  # Total radius
         self.blade_pitch = np.radians(-2)

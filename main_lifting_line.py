@@ -4,6 +4,22 @@ from Lifting_Line import Turbine, GetRelaxationFactor
 from read_write import read_from_file, write_to_file
 
 
+def read_normalised(path):
+    rho = 1.225
+    v0 = 10
+    r_blade = 50
+
+    [r, alpha, phi, pn, pt, a, a_prime] = read_from_file(path)
+    dr = abs(r[1] - r[0])
+
+    pn = 3 * pn / (.5 * rho * v0 ** 2 * np.pi * r_blade)
+    pt = 3 * pt / (.5 * rho * v0 ** 2 * np.pi * r_blade)
+
+    r = r / r_blade
+
+    return r, alpha, phi, pn, pt, a, a_prime
+
+
 def check_convergence(check_input: int):
     n_rot_wake, n_point_per_rotation, n_blade_elements, convection_speed = 8, 12, 30, 10
     [[cp_BEM, _]] = read_from_file(f'./saved_data/BEM_cp_cT_10.txt')
@@ -38,9 +54,9 @@ def check_convergence(check_input: int):
 def compare_to_BEM():
     linestyles = ('dashed', 'solid', 'dotted')
     for j, tsr in enumerate((6, 8, 10)):
-        [r_BEM, alpha_BEM, phi_BEM, pn_BEM, pt_BEM, a_BEM, a_prime_BEM] = read_from_file(f'./saved_data/BEM_output_{tsr}.txt')
+        [r_BEM, alpha_BEM, phi_BEM, pn_BEM, pt_BEM, a_BEM, a_prime_BEM] = read_normalised(f'./saved_data/BEM_output_{tsr}.txt')
         [[cp_BEM, cT_BEM]] = read_from_file(f'./saved_data/BEM_cp_cT_{tsr}.txt')
-        [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_from_file(f'./saved_data/LL_output_{tsr}_blade0.txt')
+        [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_normalised(f'./saved_data/LL_output_{tsr}_blade0.txt')
         [[cT_LL, cp_LL]] = read_from_file(f'./saved_data/LL_cT_cp_{tsr}.txt')
 
         plt.figure(1, figsize=(5, 5))
@@ -68,7 +84,7 @@ def compare_to_BEM():
         plt.plot(r_LL, a_prime_LL, linestyle=linestyles[j], color='tab:orange', label=f'Lifting line ($\\lambda={tsr}$)')
 
     plt.figure(1, figsize=(5, 5))
-    plt.xlabel('$r$ [m]')
+    plt.xlabel('$r/R$ [-]')
     plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
     plt.grid()
     plt.legend()
@@ -76,7 +92,7 @@ def compare_to_BEM():
     plt.savefig(f'./figures/Compare_to_BEM/Angle_of_attack.pdf')
 
     plt.figure(2, figsize=(5, 5))
-    plt.xlabel('$r$ [m]')
+    plt.xlabel('$r/R$ [-]')
     plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
     plt.grid()
     plt.legend()
@@ -84,23 +100,23 @@ def compare_to_BEM():
     plt.savefig(f'./figures/Compare_to_BEM/Inflow_angle.pdf')
 
     plt.figure(3, figsize=(5, 5))
-    plt.xlabel('$r$ [m]')
-    plt.ylabel('Normal force ($p_{n}$) [N/m]')
+    plt.xlabel('$r/R$ [-]')
+    plt.ylabel('Normal force ($C_n$) [-]')
     plt.grid()
     plt.legend()
     plt.tight_layout()
     plt.savefig(f'./figures/Compare_to_BEM/Normal_force.pdf')
 
     plt.figure(4, figsize=(5, 5))
-    plt.xlabel('$r$ [m]')
-    plt.ylabel('Tangential force ($p_{t}$) [N/m]')
+    plt.xlabel('$r/R$ [-]')
+    plt.ylabel('Tangential force ($C_t$) [-]')
     plt.grid()
     plt.legend()
     plt.tight_layout()
     plt.savefig(f'./figures/Compare_to_BEM/Tangential_force.pdf')
 
     plt.figure(5, figsize=(5, 5))
-    plt.xlabel('$r$ [m]')
+    plt.xlabel('$r/R$ [-]')
     plt.ylabel('Axial induction factor ($a$) [-]')
     plt.grid()
     plt.legend()
@@ -108,7 +124,7 @@ def compare_to_BEM():
     plt.savefig(f'./figures/Compare_to_BEM/Axial_induction_factor.pdf')
 
     plt.figure(6, figsize=(5, 5))
-    plt.xlabel('$r$ [m]')
+    plt.xlabel('$r/R$ [-]')
     plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
     plt.grid()
     plt.legend()
@@ -121,32 +137,32 @@ def compare_to_BEM():
 def compare_w_wo_induction():
     tsr = 10
 
-    [r_LL_a, alpha_LL_a, phi_LL_a, pn_LL_a, pt_LL_a, a_LL_a, a_prime_LL_a] = read_from_file(f'./saved_data/LL_output_{tsr}_blade0_induction.txt')
+    [r_LL_a, alpha_LL_a, phi_LL_a, pn_LL_a, pt_LL_a, a_LL_a, a_prime_LL_a] = read_normalised(f'./saved_data/LL_output_{tsr}_blade0_induction.txt')
     [[cT_LL_a, cp_LL_a]] = read_from_file(f'./saved_data/LL_cT_cp_{tsr}_induction.txt')
-    [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_from_file(f'./saved_data/LL_output_{tsr}_blade0.txt')
+    [r_LL, alpha_LL, phi_LL, pn_LL, pt_LL, a_LL, a_prime_LL] = read_normalised(f'./saved_data/LL_output_{tsr}_blade0.txt')
     [[cT_LL, cp_LL]] = read_from_file(f'./saved_data/LL_cT_cp_{tsr}.txt')
 
-    plt.figure(1, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
+    plt.figure(1, figsize=(5, 5)); plt.xlabel('$r/R$ [-]'); plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
     plt.plot(r_LL_a, np.degrees(alpha_LL_a), color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
     plt.plot(r_LL, np.degrees(alpha_LL), color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
 
-    plt.figure(2, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
+    plt.figure(2, figsize=(5, 5)); plt.xlabel('$r/R$ [-]'); plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
     plt.plot(r_LL_a, np.degrees(phi_LL_a), color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
     plt.plot(r_LL, np.degrees(phi_LL), color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
 
-    plt.figure(3, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Normal force ($p_{n}$) [N/m]')
+    plt.figure(3, figsize=(5, 5)); plt.xlabel('$r/R$ [-]'); plt.ylabel('Normal force ($C_n$) [-]')
     plt.plot(r_LL_a, pn_LL_a, color='tab:blue', label='Lifting Line ($a_w$ = 0.16) ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_LL_a))
     plt.plot(r_LL, pn_LL, color='tab:orange', label='Lifting line ($a_w$ = 0) ($\\lambda=%d$), $c_T=%.3f$'%(tsr, cT_LL))
 
-    plt.figure(4, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential force ($p_{t}$) [N/m]')
+    plt.figure(4, figsize=(5, 5)); plt.xlabel('$r/R$ [-]'); plt.ylabel('Tangential force ($C_t$) [-]')
     plt.plot(r_LL_a, pt_LL_a, color='tab:blue', label='Lifting Line ($a_w$ = 0.16) ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_LL_a))
     plt.plot(r_LL, pt_LL, color='tab:orange', label='Lifting line ($a_w$ = 0) ($\\lambda=%d$), $C_P=%.3f$'%(tsr, cp_LL))
 
-    plt.figure(5, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Axial induction factor ($a$) [-]')
+    plt.figure(5, figsize=(5, 5)); plt.xlabel('$r/R$ [-]'); plt.ylabel('Axial induction factor ($a$) [-]')
     plt.plot(r_LL_a, a_LL_a, color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
     plt.plot(r_LL, a_LL, color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
 
-    plt.figure(6, figsize=(5, 5)); plt.xlabel('$r$ [m]'); plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
+    plt.figure(6, figsize=(5, 5)); plt.xlabel('$r/R$ [-]'); plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
     plt.plot(r_LL_a, a_prime_LL_a, color='tab:blue', label=f'Lifting Line ($a_w$ = 0.16) ($\\lambda={tsr}$)')
     plt.plot(r_LL, a_prime_LL, color='tab:orange', label=f'Lifting line ($a_w$ = 0) ($\\lambda={tsr}$)')
 
@@ -190,7 +206,7 @@ def compare_w_wo_induction():
 
 
 def multirotor_phased():
-    phases = 30 * np.arange(1, 4)
+    phases = 30 * np.arange(0, 4)
     distance = 1 * 100
     for phase in phases:
         turbs = run_lifting_line(multirotor=True, phase=np.radians(phase), distance=distance)
@@ -199,13 +215,13 @@ def multirotor_phased():
 
 
 def compare_phases():
-    phases = 30 * np.arange(1, 4)
+    phases = 30 * np.arange(0, 4)
     linestyles = ('dashed', 'solid', 'dotted')
     for phase in phases:
         for j in range(3):
-            [r_turb0, alpha_turb0, phi_turb0, pn_turb0, pt_turb0, a_turb0, a_prime_turb0] = read_from_file(f'./saved_data/LL_output_10_blade{j}_turb0_phase{phase}.txt')
+            [r_turb0, alpha_turb0, phi_turb0, pn_turb0, pt_turb0, a_turb0, a_prime_turb0] = read_normalised(f'./saved_data/LL_output_10_blade{j}_turb0_phase{phase}.txt')
             [[cT_turb0, cp_turb0]] = read_from_file(f'./saved_data/LL_cT_cp_10_turb0_phase{phase}.txt')
-            [r_turb1, alpha_turb1, phi_turb1, pn_turb1, pt_turb1, a_turb1, a_prime_turb1] = read_from_file(f'./saved_data/LL_output_10_blade{j}_turb1_phase{phase}.txt')
+            [r_turb1, alpha_turb1, phi_turb1, pn_turb1, pt_turb1, a_turb1, a_prime_turb1] = read_normalised(f'./saved_data/LL_output_10_blade{j}_turb1_phase{phase}.txt')
             [[cT_turb1, cp_turb1]] = read_from_file(f'./saved_data/LL_cT_cp_10_turb1_phase{phase}.txt')
 
             plt.figure(1, figsize=(5, 5))
@@ -245,7 +261,7 @@ def compare_phases():
                      label=f'Turbine 1, blade {j}')
 
         plt.figure(1, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
+        plt.xlabel('$r/R$ [-]')
         plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
         plt.grid()
         plt.legend()
@@ -253,7 +269,7 @@ def compare_phases():
         plt.savefig(f'./figures/Compare_phases/Angle_of_attack_phase{phase}.pdf')
 
         plt.figure(2, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
+        plt.xlabel('$r/R$ [-]')
         plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
         plt.grid()
         plt.legend()
@@ -261,23 +277,23 @@ def compare_phases():
         plt.savefig(f'./figures/Compare_phases/Inflow_angle_phase{phase}.pdf')
 
         plt.figure(3, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
-        plt.ylabel('Normal force ($p_{n}$) [N/m]')
+        plt.xlabel('$r/R$ [-]')
+        plt.ylabel('Normal force ($C_n$) [-]')
         plt.grid()
         plt.legend()
         plt.tight_layout()
         plt.savefig(f'./figures/Compare_phases/Normal_force_phase{phase}.pdf')
 
         plt.figure(4, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
-        plt.ylabel('Tangential force ($p_{t}$) [N/m]')
+        plt.xlabel('$r/R$ [-]')
+        plt.ylabel('Tangential force ($C_t$) [-]')
         plt.grid()
         plt.legend()
         plt.tight_layout()
         plt.savefig(f'./figures/Compare_phases/Tangential_force_phase{phase}.pdf')
 
         plt.figure(5, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
+        plt.xlabel('$r/R$ [-]')
         plt.ylabel('Axial induction factor ($a$) [-]')
         plt.grid()
         plt.legend()
@@ -285,7 +301,7 @@ def compare_phases():
         plt.savefig(f'./figures/Compare_phases/Axial_induction_factor_phase{phase}.pdf')
 
         plt.figure(6, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
+        plt.xlabel('$r/R$ [-]')
         plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
         plt.grid()
         plt.legend()
@@ -297,9 +313,9 @@ def compare_phases():
 
 def multirotor_spaced():
     distances = 100 * np.array([1, 2, 5, 1000])
-    phase = 0
+    phase = 60
     for distance in distances:
-        turbs = run_lifting_line(multirotor=True, phase=phase, distance=distance)
+        turbs = run_lifting_line(multirotor=True, phase=np.radians(phase), distance=distance)
         out0, ct0, cp0 = turbs[0].extract_information_N_write(suffix=f'_turb0_dist{distance}')
         out1, ct1, cp1 = turbs[1].extract_information_N_write(suffix=f'_turb1_dist{distance}')
 
@@ -309,10 +325,10 @@ def compare_distances():
     linestyles = ('dashed', 'solid', 'dotted')
     for dist in distances:
         for j in range(3):
-            [r_turb0, alpha_turb0, phi_turb0, pn_turb0, pt_turb0, a_turb0, a_prime_turb0] = read_from_file(
+            [r_turb0, alpha_turb0, phi_turb0, pn_turb0, pt_turb0, a_turb0, a_prime_turb0] = read_normalised(
                 f'./saved_data/LL_output_10_blade{j}_turb0_dist{dist}.txt')
             [[cT_turb0, cp_turb0]] = read_from_file(f'./saved_data/LL_cT_cp_10_turb0_dist{dist}.txt')
-            [r_turb1, alpha_turb1, phi_turb1, pn_turb1, pt_turb1, a_turb1, a_prime_turb1] = read_from_file(
+            [r_turb1, alpha_turb1, phi_turb1, pn_turb1, pt_turb1, a_turb1, a_prime_turb1] = read_normalised(
                 f'./saved_data/LL_output_10_blade{j}_turb1_dist{dist}.txt')
             [[cT_turb1, cp_turb1]] = read_from_file(f'./saved_data/LL_cT_cp_10_turb1_dist{dist}.txt')
 
@@ -353,7 +369,7 @@ def compare_distances():
                      label=f'Turbine 1, blade {j}')
 
         plt.figure(1, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
+        plt.xlabel('$r/R$ [-]')
         plt.ylabel('Angle of attack ($\\alpha$) [$^{\\circ}$]')
         plt.grid()
         plt.legend()
@@ -361,7 +377,7 @@ def compare_distances():
         plt.savefig(f'./figures/Compare_distances/Angle_of_attack_dist{dist}.pdf')
 
         plt.figure(2, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
+        plt.xlabel('$r/R$ [-]')
         plt.ylabel('Inflow angle ($\\phi$) [$^{\\circ}$]')
         plt.grid()
         plt.legend()
@@ -369,23 +385,23 @@ def compare_distances():
         plt.savefig(f'./figures/Compare_distances/Inflow_angle_dist{dist}.pdf')
 
         plt.figure(3, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
-        plt.ylabel('Normal force ($p_{n}$) [N/m]')
+        plt.xlabel('$r/R$ [-]')
+        plt.ylabel('Normal force ($C_n$) [-]')
         plt.grid()
         plt.legend()
         plt.tight_layout()
         plt.savefig(f'./figures/Compare_distances/Normal_force_dist{dist}.pdf')
 
         plt.figure(4, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
-        plt.ylabel('Tangential force ($p_{t}$) [N/m]')
+        plt.xlabel('$r/R$ [-]')
+        plt.ylabel('Tangential force ($C_t$) [-]')
         plt.grid()
         plt.legend()
         plt.tight_layout()
         plt.savefig(f'./figures/Compare_distances/Tangential_force_dist{dist}.pdf')
 
         plt.figure(5, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
+        plt.xlabel('$r/R$ [-]')
         plt.ylabel('Axial induction factor ($a$) [-]')
         plt.grid()
         plt.legend()
@@ -393,7 +409,7 @@ def compare_distances():
         plt.savefig(f'./figures/Compare_distances/Axial_induction_factor_dist{dist}.pdf')
 
         plt.figure(6, figsize=(5, 5))
-        plt.xlabel('$r$ [m]')
+        plt.xlabel('$r/R$ [-]')
         plt.ylabel('Tangential induction factor ($a^\prime$) [-]')
         plt.grid()
         plt.legend()

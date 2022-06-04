@@ -3,25 +3,13 @@ import scipy.integrate as spig
 import matplotlib.pyplot as plt
 import time
 
-from read_write import read_from_file
+from read_write import read_from_file, write_to_file
 
 
 relaxation = 0.1
 rho = 1.225
 p_atm = 101325 #pa
 
-def write_to_file(array, path):
-    lines = []
-    for row in array:
-        line = ''
-        for num in row:
-            line = line + f'{num},'
-
-        lines.append(line[:-1] + '\n')
-
-    f = open(path, 'w')
-    f.writelines(lines)
-    f.close()
 
 class DU95W150:
     def __init__(self):
@@ -265,7 +253,7 @@ class Turbine:
         for i, lamda in enumerate(tsr):
             self.blade.determine_cp_ct(10, lamda, 0, 0, 0)
             cp[i] = self.blade.c_power
-            cT[i] = self.blade.c_thrust
+            # cT[i] = self.blade.c_thrust
             thrust[i] = self.blade.thrust
             torque[i] = self.blade.power / (lamda * 10 / self.blade.r)
 
@@ -318,7 +306,7 @@ class Turbine:
                 a_prime[i] = be.a_prime
                 twist[i] = be.beta
             Big_array = [self.blade.r_list, alpha, phi, pn, pt, a, a_prime]
-            write_to_file(Big_array, f'./saved_data/BEM_output{tsr}.txt')
+            write_to_file(Big_array, f'./saved_data/BEM_output_{tsr}.txt')
             write_to_file([[cp, cT]], f'./saved_data/BEM_cp_cT_{tsr}.txt')
 
             plt.figure(1, figsize=(5, 5))
@@ -486,8 +474,8 @@ class Turbine:
 
         for i, be in enumerate(self.blade.blade_elements):
             # Ignore first and last one, not set because tip & root loss factors
-            if (i == 0 or i == len(self.blade.blade_elements)-1):
-                continue;
+            if i == 0 or i == len(self.blade.blade_elements)-1:
+                continue
 
             # At the end and the start, the static pressure is just the atmospheric pressure.
             enthalpies[0,i] = p_atm/rho + 0.5*v_0**2
@@ -684,7 +672,7 @@ if __name__ == '__main__':
     # convergence()
     # airfoil_polars()
 
-    turbine = Turbine(50)
+    turbine = Turbine(30)
     # turbine.cp_lamda()
     turbine.spanwise_distributions()
     # turbine.yaw_polar_plots()

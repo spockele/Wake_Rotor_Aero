@@ -669,15 +669,15 @@ def airfoil_polars():
 
 
 if __name__ == '__main__':
-    # convergence()
-    # airfoil_polars()
+    convergence()
+    airfoil_polars()
 
     turbine = Turbine(30)
-    # turbine.cp_lamda()
+    turbine.cp_lamda()
     turbine.spanwise_distributions()
-    # turbine.yaw_polar_plots()
-    # turbine.loss_comparison()
-    # turbine.enthalpy_trial()
+    turbine.yaw_polar_plots()
+    turbine.loss_comparison()
+    turbine.enthalpy_trial()
 
     # a = .82
     # yaw = np.radians(30)

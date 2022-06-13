@@ -1,8 +1,8 @@
-clear all; close all; 
-N = 10; %Number of panels  defining the airfoil
+clear; close all; addpath('aux_functions'); run('plot_settings.m');
+N = 50; %Number of panels  defining the airfoil
 delta_s = 0.1;
 s_final = 5; %amount of periods of the unsteadiness
-studyCase = 'unsteady';
+studyCase = 'steady';
 
 c = 1; %[m] chord
 U_inf = 1; %[m/s] freestream velocity
@@ -22,8 +22,17 @@ end
 
 switch studyCase
     case 'steady'
-        theta =@(s) deg2rad(30); %angle of attack    
-        s = s_final;
+        alpha_vec = -15:1:20;
+        lift_vec = nan(size(alpha_vec)); %pre-allocation
+        for ii = 1:length(alpha_vec)
+            theta =@(s) deg2rad(alpha_vec(ii)); %angle of attack    
+            s = s_final;
+            wake.VPos = nan(Ns,2); 
+            wake.circ = nan(Ns,1);
+            [panel,wake] = getCirculation(s,delta_s,s_final,N,U_inf,c,theta,studyCase,panel,wake);
+            total_circ = sum(panel.circ); %Total circulation around the airfoil
+            lift_vec(ii) = rho*U_inf*total_circ;
+        end
     case 'unsteady'
         K = 0.1; %0.02; 0.05, 0.1 %reduced frequency K = omega*c/2/U_inf
         omega = K*2*U_inf/c; %[rad/s]
@@ -34,25 +43,39 @@ switch studyCase
         wake.circ = nan(Ns,1);
 end
 
-count = 0; %Iteration counter
-while s<=s_final
-    count=count+1;
-    s = s+delta_s;
-    % A and B matrices 
-    A = buildA(N,panel);
-    B = buildB(U_inf,theta(s),studyCase,panel,wake);
-    panel.circ = A\B;
-    
-    % The change of the total circulation of the airfoil release an oposite vortex at c1/2 behind thetrailing edge
-    wake.VPos(count,:) = [c 0];
-    wake.circ(count) = - (sum(panel.circ)-sum(panel.previousCirc));
-    
-    [Vx,Vy,P] = VelocityPressureField(c,rho,U_inf,theta(s),panel,wake,'plot_on','save_on',count);
-    
-    % Convect wake vortices 
-    wake.VPos = wake.VPos + [cos(theta(s)) , -sin(theta(s))].*U_inf*delta_s;
-    
-    wake.previousCirc = wake.circ;
+%% PLOTS
+figure(); xlabel('$\alpha$ [deg]'); ylabel('$C_L$ [-]'); grid on; hold on
+plot(alpha_vec,lift_vec,'displayName','in-house model');
+lift_theory=@(alpha) 2*pi.*deg2rad(alpha);
+plot(alpha_vec,lift_theory(alpha_vec),'displayName','$C_{L} =2 \pi \alpha$');
+EXP = importExperimentalData('.\experimental_data\Pelletier-mueller-2000.csv');
+plot(EXP.alpha,EXP.Cl,'ko','displayName','Experiment');
+legend('location','best');
+
+%% EXTRA FUNCTIONS
+function [panel,wake] = getCirculation(s,delta_s,s_final,N,U_inf,c,theta,studyCase,panel,wake)
+    count = 0; %Iteration counter
+    while s<=s_final
+        count=count+1;
+        s = s+delta_s;
+        % A and B matrices 
+        A = buildA(N,panel);
+        B = buildB(U_inf,theta(s),studyCase,panel,wake);
+        panel.circ = A\B;
+        
+        if strcmp(studyCase,'unsteady')
+            % The change of the total circulation of the airfoil release an oposite vortex at c1/2 behind thetrailing edge
+            wake.VPos(count,:) = [c 0];
+            wake.circ(count) = - (sum(panel.circ)-sum(panel.previousCirc));
+
+            [Vx,Vy,P] = VelocityPressureField(c,rho,U_inf,theta(s),panel,wake,'plot_on','save_on',count);
+
+            % Convect wake vortices 
+            wake.VPos = wake.VPos + [cos(theta(s)) , -sin(theta(s))].*U_inf*delta_s;
+
+            wake.previousCirc = wake.circ;
+        end
+    end
 end
 function [A] = buildA(N,panel)
     filename = sprintf('./Saved_matrices/A/N=%.0f.mat',N);
@@ -65,7 +88,6 @@ function [A] = buildA(N,panel)
                 d_vec = panel.CPPos(jj,:) - panel.VPos(ii,:);
                 d_norm = norm(d_vec); %distance between vortex ii with control point jj
                 d_ang = atan2(d_vec(2),d_vec(1));
-                disp(d_ang)
                 A(jj,ii) = 1/(2*pi*d_norm)* cos(d_ang);
             end
         end
@@ -135,4 +157,22 @@ function [Vx,Vy,P] = VelocityPressureField(c,rho,U_inf,theta,panel,wake,plot_fla
     fig.Position = [100 100 1750 500];
     if save_flag;  mkdir('./figures/field'); saveas(gcf,sprintf('./figures/field/%.0f.jpg',counter));  end
     close(fig,fig_1)
+end
+function PelletierMueller2000 = importExperimentalData(filename, dataLines)
+    if nargin < 2
+        dataLines = [1, Inf];
+    end
+    % Setup the Import Options and import the data
+    opts = delimitedTextImportOptions("NumVariables", 2);
+    % Specify range and delimiter
+    opts.DataLines = dataLines;
+    opts.Delimiter = ",";
+    % Specify column names and types
+    opts.VariableNames = ["alpha", "Cl"];
+    opts.VariableTypes = ["double", "double"];
+    % Specify file level properties
+    opts.ExtraColumnsRule = "ignore";
+    opts.EmptyLineRule = "read";
+    % Import the data
+    PelletierMueller2000 = readtable(filename, opts);
 end

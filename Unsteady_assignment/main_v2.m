@@ -2,7 +2,7 @@ clear; close all; addpath('aux_functions'); run('plot_settings.m');
 N = 50; %Number of panels  defining the airfoil
 studyCase = 'unsteady'; K=0.1; %0.02; 0.05, 0.1 %reduced frequency K = omega*c/2/U_inf
 
-delta_s = 0.1;
+delta_s = 0.5;
 s_final = 1/2/K; %final time in order to get one full period
 c = 1; %[m] chord
 U_inf = 1; %[m/s] freestream velocity
@@ -67,8 +67,8 @@ function []= plot_steady_Cl(alpha_vec,Cl_vec)
     %--------------------SAVE IMAGE-----------------------------------%
     plotName = strcat('./figures/steady_Cl_vs_alpha.pdf');
     set(gcf, 'Position', 600.*[0.1 0.1 1.5 1]);
-    set(gcf, 'PaperPosition', 10.*[0 0 1.5 1]); 
-    set(gcf, 'PaperSize',  10.*[1.5 1]); 
+    set(gcf, 'PaperPosition', 100.*[0 0 1.5 1]); 
+    set(gcf, 'PaperSize',  20.*[1.5 1]); 
     print(plotName,'-dpdf','-bestfit');
 end
 function []= plot_transient_Cl()
@@ -85,8 +85,8 @@ function []= plot_transient_Cl()
     %--------------------SAVE IMAGE-----------------------------------%
     plotName = strcat('./figures/unsteady_Cl_vs_alpha.pdf');
     set(gcf, 'Position', 600.*[0.1 0.1 1.5 1]);
-    set(gcf, 'PaperPosition', 10.*[0 0 1.5 1]); 
-    set(gcf, 'PaperSize',  10.*[1.5 1]); 
+    set(gcf, 'PaperPosition', 100.*[0 0 1.5 1]); 
+    set(gcf, 'PaperSize',  20.*[1.5 1]); 
     print(plotName,'-dpdf','-bestfit');
 end
 %% EXTRA FUNCTIONS
@@ -117,6 +117,7 @@ function [panel,wake,Cl_vec,theta_vec] = getCirculation(s,delta_s,s_final,N,rho,
                 % Convect wake vortices 
                 wake.VPos = wake.VPos + [cos(theta(s)) , -sin(theta(s))].*U_inf*delta_s;
                 wake.previousCirc = wake.circ;
+                panel.previousCirc = panel.circ;
                 % compute the Cl and save it in a matrix
                 total_circ = sum(panel.circ); %Total circulation around the airfoil
                 Cl_vec(count) = rho*U_inf*total_circ / (0.5*rho*U_inf^2*c);
